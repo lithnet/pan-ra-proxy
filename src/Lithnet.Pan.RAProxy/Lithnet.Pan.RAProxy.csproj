@@ -53,6 +53,7 @@
     <Compile Include="Exceptions\UnknownRadiusServerException.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="Exceptions\PanApiException.cs" />
+    <Compile Include="Logging.cs" />
     <Compile Include="PanApi\ApiInterface.cs" />
     <Compile Include="AccountingListener.cs" />
     <Compile Include="PanApi\Entry.cs" />

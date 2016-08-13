@@ -5,11 +5,16 @@ using System.ServiceProcess;
 using System.Text;
 using System.Threading.Tasks;
 using System.Configuration;
+using System.Diagnostics;
 
 namespace Lithnet.Pan.RAProxy
 {
     public static class Program
     {
+        private static AccountingListener listener;
+
+        internal const string EventSourceName = "PanRAProxy";
+
         public static void Main()
         {
             bool runService = !System.Diagnostics.Debugger.IsAttached;
@@ -32,11 +37,18 @@ namespace Lithnet.Pan.RAProxy
 
         internal static void Start()
         {
+            if (!EventLog.SourceExists(Program.EventSourceName))
+            {
+                EventLog.CreateEventSource(new EventSourceCreationData(Program.EventSourceName, "Application"));
+            }
+
             if (Config.DisableCertificateValidation)
             {
                 System.Net.ServicePointManager.ServerCertificateValidationCallback += (sender, certificate, chain, errors) => true;
+                EventLog.WriteEntry(Program.EventSourceName, "Server certificate validation has been disabled. The SSL certificate on the Palo Alto device will not be validated", EventLogEntryType.Warning, Logging.EventIDServerCertificateValidationDisabled);
             }
 
+            Program.listener = new AccountingListener(Config.AccountingPort);
         }
 
         internal static void Stop()

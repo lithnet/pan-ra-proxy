@@ -9,21 +9,30 @@ using System.Collections.Specialized;
 using System.Web;
 using System.Net.Http;
 using System.Security.Cryptography.X509Certificates;
+using System.Configuration;
+using System.Diagnostics;
+using System.Net.Http.Headers;
+using System.Xml;
 
 namespace Lithnet.Pan.RAProxy
 {
-    using System.Configuration;
-    using System.Net.Http.Headers;
-    using System.Xml;
-
-
     public abstract class Message
     {
         public abstract string ApiType { get; }
 
         public void Send()
         {
-            string response = this.Submit();
+            string response;
+
+            try
+            {
+                response = this.Submit();
+            }
+            catch (Exception ex)
+            {
+                EventLog.WriteEntry(Program.EventSourceName, $"The attempt to send the update failed\n{ex.Message}\n{ex.Source}\n", EventLogEntryType.Error, Logging.EventIDMessageSendException);
+                return;
+            }
 
             try
             {
@@ -40,16 +49,19 @@ namespace Lithnet.Pan.RAProxy
                     }
                     else
                     {
+                        EventLog.WriteEntry(Program.EventSourceName, $"The API called failed with status {status.InnerText}\n{response}", EventLogEntryType.Error, Logging.EventIDApiException);
                         throw new PanApiException($"The API called failed with status {status.InnerText}", response);
                     }
                 }
                 else
                 {
+                    EventLog.WriteEntry(Program.EventSourceName, $"The API called failed with an unknown result\n{response}", EventLogEntryType.Error, Logging.EventIDUnknownApiException);
                     throw new PanApiException($"The API called failed with an unknown result", response);
                 }
             }
             catch
             {
+                EventLog.WriteEntry(Program.EventSourceName, $"The API called failed with an unsupported response\n{response}", EventLogEntryType.Error, Logging.EventIDUnknownApiResponse);
                 throw new PanApiException($"The API called failed with an unsupported response", response);
             }
         }
