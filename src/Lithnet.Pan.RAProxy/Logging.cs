@@ -26,6 +26,7 @@ namespace Lithnet.Pan.RAProxy
 
         // Info
         public const int EventIDAccountingRequestRecieved = 4001;
+        public const int EventIDUserIDUpdateComplete = 4002;
 
 
     }

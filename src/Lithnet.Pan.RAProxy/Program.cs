@@ -159,6 +159,7 @@ namespace Lithnet.Pan.RAProxy
             };
 
             UidMessage message = new UidMessage { Payload = new Payload() };
+            string type;
 
             switch (accountingType.ValueAsInt)
             {
@@ -166,12 +167,14 @@ namespace Lithnet.Pan.RAProxy
                     // Accounting start
                     message.Payload.Login = new Login();
                     message.Payload.Login.Entries.Add(e);
+                    type = "login";
                     break;
 
                 case 2:
                     // Accounting stop
                     message.Payload.Logout = new Logout();
                     message.Payload.Logout.Entries.Add(e);
+                    type = "logout";
                     break;
 
                 default:
@@ -181,14 +184,16 @@ namespace Lithnet.Pan.RAProxy
             try
             {
                 message.Send();
+                EventLog.WriteEntry(Program.EventSourceName, $"UserID API mapping succeeded\nUsername: {username.ValueAsString}\nIP address: {framedIP.ValueAsString}\nType: {type}", EventLogEntryType.Information, Logging.EventIDUserIDUpdateComplete);
+
             }
             catch (PanApiException ex)
             {
-                EventLog.WriteEntry(Program.EventSourceName, $"The UserID API called failed\nUsername:{username.ValueAsString}\nIP address:{framedIP.ValueAsString}\n{ex.Message}\n{ex.StackTrace}\n{ex.Detail}", EventLogEntryType.Error, Logging.EventIDMessageSendFailure);
+                EventLog.WriteEntry(Program.EventSourceName, $"The UserID API called failed\nUsername: {username.ValueAsString}\nIP address: {framedIP.ValueAsString}\n{ex.Message}\n{ex.StackTrace}\n{ex.Detail}", EventLogEntryType.Error, Logging.EventIDMessageSendFailure);
             }
             catch (Exception ex)
             {
-                EventLog.WriteEntry(Program.EventSourceName, $"An error occured while submitting the user-id update\nUsername:{username.ValueAsString}\nIP address:{framedIP.ValueAsString}\n{ex.Message}\n{ex.StackTrace}", EventLogEntryType.Error, Logging.EventIDMessageSendFailure);
+                EventLog.WriteEntry(Program.EventSourceName, $"An error occured while submitting the user-id update\nUsername: {username.ValueAsString}\nIP address: {framedIP.ValueAsString}\n{ex.Message}\n{ex.StackTrace}", EventLogEntryType.Error, Logging.EventIDMessageSendFailure);
             }
         }
     }
