@@ -49,10 +49,12 @@ namespace Lithnet.Pan.RAProxy
             }
 
             Program.listener = new AccountingListener(Config.AccountingPort);
+            Program.listener.Start();
         }
 
         internal static void Stop()
         {
+            Program.listener.Stop();
         }
 
         private static void TestMessage()
