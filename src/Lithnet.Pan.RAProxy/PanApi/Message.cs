@@ -50,19 +50,19 @@ namespace Lithnet.Pan.RAProxy
                     else
                     {
                         EventLog.WriteEntry(Program.EventSourceName, $"The API called failed with status {status.InnerText}\n{response}", EventLogEntryType.Error, Logging.EventIDApiException);
-                        throw new InvalidRadiusAttributeException($"The API called failed with status {status.InnerText}", response);
+                        throw new PanApiException($"The API called failed with status {status.InnerText}", response);
                     }
                 }
                 else
                 {
                     EventLog.WriteEntry(Program.EventSourceName, $"The API called failed with an unknown result\n{response}", EventLogEntryType.Error, Logging.EventIDUnknownApiException);
-                    throw new InvalidRadiusAttributeException($"The API called failed with an unknown result", response);
+                    throw new PanApiException($"The API called failed with an unknown result", response);
                 }
             }
             catch
             {
                 EventLog.WriteEntry(Program.EventSourceName, $"The API called failed with an unsupported response\n{response}", EventLogEntryType.Error, Logging.EventIDUnknownApiResponse);
-                throw new InvalidRadiusAttributeException($"The API called failed with an unsupported response", response);
+                throw new PanApiException($"The API called failed with an unsupported response", response);
             }
         }
 
