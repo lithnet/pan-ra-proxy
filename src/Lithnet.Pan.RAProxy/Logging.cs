@@ -11,12 +11,14 @@ namespace Lithnet.Pan.RAProxy
         // Warnings
         public const int EventIDServerCertificateValidationDisabled = 2001;
         
-        // Errors
+        // Api Errors
         public const int EventIDApiException = 3001;
         public const int EventIDUnknownApiException = 3002;
         public const int EventIDUnknownApiResponse= 3003;
         public const int EventIDMessageSendException = 3004;
 
+        // Accounting Errors
+        public const int EventIDUnknownRadiusHost = 3101;
 
     }
 }

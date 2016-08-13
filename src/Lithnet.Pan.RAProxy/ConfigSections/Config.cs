@@ -7,6 +7,7 @@ using System.Configuration;
 
 namespace Lithnet.Pan.RAProxy
 {
+    using System.Diagnostics;
     using System.Net;
 
     internal static class Config
@@ -41,7 +42,9 @@ namespace Lithnet.Pan.RAProxy
                 }
             }
 
-            throw new UnknownRadiusServerException($"A RADIUS message was recieved from an unknown source {address}");
+            EventLog.WriteEntry(Program.EventSourceName, $"A RADIUS message was received from an unknown source {address} and was discarded", EventLogEntryType.Error, Logging.EventIDUnknownRadiusHost);
+
+            return null;
         }
     }
 }

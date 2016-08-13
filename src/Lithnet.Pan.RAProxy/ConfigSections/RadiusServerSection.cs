@@ -8,6 +8,7 @@ using System.Configuration;
 namespace Lithnet.Pan.RAProxy
 {
     using System.Net;
+    using System.Net.Sockets;
 
     public class RadiusServerSection : ConfigurationElement
     {
@@ -49,7 +50,17 @@ namespace Lithnet.Pan.RAProxy
             }
             else
             {
-                addresses.AddRange(Dns.GetHostAddresses(this.Hostname));
+                try
+                {
+                    addresses.AddRange(Dns.GetHostAddresses(this.Hostname));
+                }
+                catch (SocketException ex)
+                {
+                    if (ex.SocketErrorCode != SocketError.HostNotFound)
+                    {
+                        throw;
+                    }
+                }
             }
 
             return addresses;
