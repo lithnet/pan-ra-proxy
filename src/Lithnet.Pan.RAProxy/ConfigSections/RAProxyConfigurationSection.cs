@@ -11,6 +11,20 @@ namespace Lithnet.Pan.RAProxy
     {
         public const string SectionName = "ra-proxy-config";
 
+
+        [ConfigurationProperty("debug-enabled", IsRequired = false, DefaultValue = false)]
+        public bool DebuggingEnabled
+        {
+            get
+            {
+                return (bool)this["debug-enabled"];
+            }
+            set
+            {
+                this["debug-enabled"] = value;
+            }
+        }
+
         [ConfigurationProperty("radius-servers")]
         public RadiusServerCollection RadiusServers
         {

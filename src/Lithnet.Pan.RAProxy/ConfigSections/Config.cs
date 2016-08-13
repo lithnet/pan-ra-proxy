@@ -24,6 +24,8 @@ namespace Lithnet.Pan.RAProxy
 
         public static int AccountingPort => Config.section.RadiusClient.Port;
 
+        public static bool DebuggingEnabled => Config.section.DebuggingEnabled;
+
         public static string GetSecretForIP(IPAddress address)
         {
             string addressStringForm = address.ToString();
