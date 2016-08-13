@@ -92,7 +92,7 @@ namespace Lithnet.Pan.RAProxy
             int requestLength = (data[2] << 8) | data[3];       // Length is next 16 bits, representing packet length
 
             // Determine if the packet contains Accounting-Request type code (4), otherwise do nothing
-            if (data[0] != (byte)4)
+            if (requestType != (byte)4)
             {
                 Debug.WriteLine(" - Ignored: Not AccountingRequest type.");
                 return null;
@@ -107,31 +107,7 @@ namespace Lithnet.Pan.RAProxy
             }
 
             // We're all good, store the attributes.
-            int requestPosition = 20;
-            int attributeType;
-            int attributeLength;
-            byte[] attributeBytes;
-            Dictionary<int, byte[]> attributes = new Dictionary<int, byte []>();
-            while (requestPosition+2 < requestLength-20)
-            {
-                attributeType = Convert.ToUInt16(data[requestPosition]);
-                requestPosition++;
-                attributeLength = Convert.ToUInt16(data[requestPosition]);
-                requestPosition++;
-                if (attributeLength > 0)
-                {
-                    attributeBytes = new byte[attributeLength - 2];
-                    Array.Copy(data, requestPosition, attributeBytes, 0, attributeLength-2);
-                    requestPosition += attributeLength - 2;
-                }
-                else
-                {
-                    attributeBytes = null;
-                }
-
-                attributes.Add(attributeType, attributeBytes);
-                
-            }
+            List<RadiusAttribute> attributes = RadiusAttribute.ParseAttributes(data, 20);
 
             // Send the attributes array on to the necessary interface
             AccountingRequest(sender, attributes);
