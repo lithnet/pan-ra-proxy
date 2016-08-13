@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Lithnet.Pan.RAProxy
 {
-    class RadiusAttribute
+    public class RadiusAttribute
     {
         // Type of attribute
         public RadiusAttributeType Type { get; set; }
@@ -18,6 +19,7 @@ namespace Lithnet.Pan.RAProxy
         public String ValueAsString { get; set; }
         public int ValueAsInt { get; set; }
         public byte[] ValueAsByteArray { get; set; }
+        public IPAddress ValueAsIPAddress { get; set; }
 
 
         /// <summary>
@@ -39,34 +41,88 @@ namespace Lithnet.Pan.RAProxy
             if (rawAttributeBlock.Length < 2)
                 throw new InvalidRadiusAttributeException($"Invalid attribute block size. Expected 2 or more bytes, actual was {rawAttributeBlock.Length}.");
 
-            int attributeType = Convert.ToUInt16(rawAttributeBlock[0]);
-            int attributeLength = Convert.ToUInt16(rawAttributeBlock[1]);
-            byte[] attributeValue = new byte[attributeLength - 2];
-            if (attributeLength > 2 && attributeLength < rawAttributeBlock.Length)
-            {
-                Array.Copy(rawAttributeBlock, 2, attributeValue, 0, attributeLength - 2);
-            }
-            else
-            {
-                attributeValue = null;
-            }
+            try {
+                int attributeType = Convert.ToUInt16(rawAttributeBlock[0]);
+                int attributeLength = Convert.ToUInt16(rawAttributeBlock[1]);
+                byte[] attributeValue = new byte[attributeLength - 2];
+                if (attributeLength > 2 && attributeLength < rawAttributeBlock.Length)
+                {
+                    Array.Copy(rawAttributeBlock, 2, attributeValue, 0, attributeLength - 2);
+                }
+                else
+                {
+                    attributeValue = null;
+                }
 
-            return ParseAttributeValue(attributeType, attributeValue);
+                return ParseAttributeValue(attributeType, attributeValue);
+            }
+            catch (Exception e)
+            {
+                throw new InvalidRadiusAttributeException($"Invalid attribute block content: {e.Message}");
+            }
+            
         }
 
         /// <summary>
-        /// 
+        /// Given a type code and value block as bytes, parse the value according to the data definition for
+        /// RADIUS attributes (RFC2865/RFC2866) and return a new RadiusAttribute entity.
         /// </summary>
-        /// <param name="type"></param>
-        /// <param name="value"></param>
-        /// <returns></returns>
+        /// <param name="type">Integer type code</param>
+        /// <param name="value">Raw value bytes</param>
+        /// <returns>New AttributeValue entity if parsed successfully</returns>
         public static RadiusAttribute ParseAttributeValue(int type, byte[] value)
         {
             RadiusAttribute newAttribute = new RadiusAttribute();
+            newAttribute.Type = (RadiusAttributeType)type;
+
+            if (value.Length > 0)
+            {
+                try
+                {
+                    // Use the type to determine the expected data in the value
+                    RadiusAttributeValueDatatype datatype = GetAttributeValueDatatype(newAttribute.Type);
+
+                    // Populate the types as best as possible
+                    newAttribute.ValueAsByteArray = value;
+                    switch (datatype)
+                    {
+                        case RadiusAttributeValueDatatype.ByteArray:
+                            newAttribute.Value = value;
+                            newAttribute.ValueAsString = Encoding.ASCII.GetString(value);
+                            break;
+                        case RadiusAttributeValueDatatype.String:
+                        case RadiusAttributeValueDatatype.EncryptedString:
+                            newAttribute.Value = Encoding.ASCII.GetString(value);
+                            newAttribute.ValueAsString = (String)newAttribute.Value;
+                            break;
+                        case RadiusAttributeValueDatatype.Integer:
+                            newAttribute.Value = BitConverter.ToUInt16(value, 0);
+                            newAttribute.ValueAsInt = (int)newAttribute.Value;
+                            newAttribute.ValueAsString = newAttribute.ValueAsInt.ToString();
+                            break;
+                        case RadiusAttributeValueDatatype.IP:
+                            newAttribute.Value = new IPAddress(value);
+                            newAttribute.ValueAsIPAddress = (IPAddress)newAttribute.Value;
+                            newAttribute.ValueAsString = newAttribute.ValueAsIPAddress.ToString();
+                            break;
+                    }
+                }
+                catch (Exception e)
+                {
+                    throw new InvalidRadiusAttributeException($"Unable to parse attribute value data: {e.Message}");
+                }
+            }
 
             return newAttribute;
         }
 
+        /// <summary>
+        /// Given a block of bytes that contains multiple RADIUS attributes within it, parse this into
+        /// an array of useable RadiusAttribute entities.
+        /// </summary>
+        /// <param name="rawAttributeMessage">Raw bytes containing RADIUS attributes, as received</param>
+        /// <param name="startIndex">Index of byte array marking start of attributes</param>
+        /// <returns></returns>
         public static List<RadiusAttribute> ParseAttributeMessage(byte[] rawAttributeMessage, int startIndex = 0)
         {
             List<RadiusAttribute> result = new List<RadiusAttribute>();
@@ -98,6 +154,140 @@ namespace Lithnet.Pan.RAProxy
             return result;
         }
 
+        /// <summary>
+        /// Determine the datatype based on the given attribute type.
+        /// </summary>
+        /// <param name="type">Attribute type integer</param>
+        /// <returns>Datatype expected</returns>
+        private static RadiusAttributeValueDatatype GetAttributeValueDatatype(RadiusAttributeType type)
+        {
+            switch (type) {
+                case RadiusAttributeType.UserName:
+                    return RadiusAttributeValueDatatype.String;
+                case RadiusAttributeType.UserPassword:
+                    return RadiusAttributeValueDatatype.EncryptedString;
+                case RadiusAttributeType.CHAPPassword:
+                    return RadiusAttributeValueDatatype.ByteArray;
+                case RadiusAttributeType.NASIPAddress:
+                    return RadiusAttributeValueDatatype.IP;
+                case RadiusAttributeType.NASPort:
+                    return RadiusAttributeValueDatatype.Integer;
+                case RadiusAttributeType.ServiceType:
+                    return RadiusAttributeValueDatatype.Integer;
+                case RadiusAttributeType.FramedProtocol:
+                    return RadiusAttributeValueDatatype.Integer;
+                case RadiusAttributeType.FramedIPAddress:
+                    return RadiusAttributeValueDatatype.IP;
+                case RadiusAttributeType.FramedIPNetmask:
+                    return RadiusAttributeValueDatatype.IP;
+                case RadiusAttributeType.FramedRouting:
+                    return RadiusAttributeValueDatatype.Integer;
+                case RadiusAttributeType.FilterId:
+                    return RadiusAttributeValueDatatype.String;
+                case RadiusAttributeType.FramedMTU:
+                    return RadiusAttributeValueDatatype.Integer;
+                case RadiusAttributeType.FramedCompression:
+                    return RadiusAttributeValueDatatype.Integer;
+                case RadiusAttributeType.LoginIPHost:
+                    return RadiusAttributeValueDatatype.IP;
+                case RadiusAttributeType.LoginService:
+                    return RadiusAttributeValueDatatype.Integer;
+                case RadiusAttributeType.LoginTCPPort:
+                    return RadiusAttributeValueDatatype.Integer;
+                case RadiusAttributeType.ReplyMessage:
+                    return RadiusAttributeValueDatatype.String;
+                case RadiusAttributeType.CallbackNumber:
+                    return RadiusAttributeValueDatatype.String;
+                case RadiusAttributeType.CallbackId:
+                    return RadiusAttributeValueDatatype.String;
+                case RadiusAttributeType.FramedRoute:
+                    return RadiusAttributeValueDatatype.String;
+                case RadiusAttributeType.FramedIPXNetwork:
+                    return RadiusAttributeValueDatatype.IP;
+                case RadiusAttributeType.State:
+                    return RadiusAttributeValueDatatype.ByteArray;
+                case RadiusAttributeType.Class:
+                    return RadiusAttributeValueDatatype.ByteArray;
+                case RadiusAttributeType.VendorSpecific:
+                    return RadiusAttributeValueDatatype.ByteArray;
+                case RadiusAttributeType.SessionTimeout:
+                    return RadiusAttributeValueDatatype.Integer;
+                case RadiusAttributeType.IdleTimeout:
+                    return RadiusAttributeValueDatatype.Integer;
+                case RadiusAttributeType.TerminationAction:
+                    return RadiusAttributeValueDatatype.Integer;
+                case RadiusAttributeType.CalledStationId:
+                    return RadiusAttributeValueDatatype.String;
+                case RadiusAttributeType.CallingStationId:
+                    return RadiusAttributeValueDatatype.String;
+                case RadiusAttributeType.NASIdentifier:
+                    return RadiusAttributeValueDatatype.String;
+                case RadiusAttributeType.ProxyState:
+                    return RadiusAttributeValueDatatype.ByteArray;
+                case RadiusAttributeType.LoginLATService:
+                    return RadiusAttributeValueDatatype.String;
+                case RadiusAttributeType.LoginLATNode:
+                    return RadiusAttributeValueDatatype.String;
+                case RadiusAttributeType.LoginLATGroup:
+                    return RadiusAttributeValueDatatype.ByteArray;
+                case RadiusAttributeType.FramedAppleTalkLink:
+                    return RadiusAttributeValueDatatype.Integer;
+                case RadiusAttributeType.FramedAppleTalkNetwork:
+                    return RadiusAttributeValueDatatype.Integer;
+                case RadiusAttributeType.FramedAppleTalkZone:
+                    return RadiusAttributeValueDatatype.String;
+                case RadiusAttributeType.AcctStatusType:
+                    return RadiusAttributeValueDatatype.Integer;
+                case RadiusAttributeType.AcctDelayTime:
+                    return RadiusAttributeValueDatatype.Integer;
+                case RadiusAttributeType.AcctInputOctets:
+                    return RadiusAttributeValueDatatype.Integer;
+                case RadiusAttributeType.AcctOutputOctets:
+                    return RadiusAttributeValueDatatype.Integer;
+                case RadiusAttributeType.AcctSessionId:
+                    return RadiusAttributeValueDatatype.String;
+                case RadiusAttributeType.AcctAuthentic:
+                    return RadiusAttributeValueDatatype.Integer;
+                case RadiusAttributeType.AcctSessionTime:
+                    return RadiusAttributeValueDatatype.Integer;
+                case RadiusAttributeType.AcctInputPackets:
+                    return RadiusAttributeValueDatatype.Integer;
+                case RadiusAttributeType.AcctOutputPackets:
+                    return RadiusAttributeValueDatatype.Integer;
+                case RadiusAttributeType.AcctTerminateCause:
+                    return RadiusAttributeValueDatatype.Integer;
+                case RadiusAttributeType.AcctMultiSessionId:
+                    return RadiusAttributeValueDatatype.String;
+                case RadiusAttributeType.AcctLinkCount:
+                    return RadiusAttributeValueDatatype.Integer;
+                case RadiusAttributeType.CHAPChallenge:
+                    return RadiusAttributeValueDatatype.ByteArray;
+                case RadiusAttributeType.NASPortType:
+                    return RadiusAttributeValueDatatype.Integer;
+                case RadiusAttributeType.PortLimit:
+                    return RadiusAttributeValueDatatype.Integer;
+                case RadiusAttributeType.LoginLATPort:
+                    return RadiusAttributeValueDatatype.String;
+                default:
+                    return RadiusAttributeValueDatatype.ByteArray;
+            }
+        }
+
+        /// <summary>
+        /// Datatypes known to be sent via RADIUS attributes
+        /// </summary>
+        public enum RadiusAttributeValueDatatype
+        {
+            String,
+            Integer,
+            ByteArray,
+            IP,
+            EncryptedString
+        }
+        
+        /// <summary>
+        /// Type codes known to be sent via RADIUS attributes
+        /// </summary>
         public enum RadiusAttributeType
         {
             UserName = 1,

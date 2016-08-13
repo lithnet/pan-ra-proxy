@@ -107,7 +107,7 @@ namespace Lithnet.Pan.RAProxy
             }
 
             // We're all good, store the attributes.
-            List<RadiusAttribute> attributes = RadiusAttribute.ParseAttributes(data, 20);
+            List<RadiusAttribute> attributes = RadiusAttribute.ParseAttributeMessage(data, 20);
 
             // Send the attributes array on to the necessary interface
             AccountingRequest(sender, attributes);
