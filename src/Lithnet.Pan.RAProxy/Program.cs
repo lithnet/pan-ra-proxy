@@ -11,6 +11,7 @@ using System.Threading;
 namespace Lithnet.Pan.RAProxy
 {
     using System.Collections.Concurrent;
+    using System.Deployment.Internal;
     using System.Net;
     using RadiusAccounting;
 
@@ -95,6 +96,12 @@ namespace Lithnet.Pan.RAProxy
                     {
                         try
                         {
+
+                            if (Config.DebuggingEnabled)
+                            {
+                                EventLog.WriteEntry(Program.EventSourceName, $"Incoming accounting request received\n{request}", EventLogEntryType.Information, Logging.EventIDAccountingRequestRecieved);
+                            }
+
                             Program.SendMessage(request);
                         }
                         catch (MissingValueException ex)
@@ -117,6 +124,11 @@ namespace Lithnet.Pan.RAProxy
             }, Program.cancellationToken.Token);
 
             Program.requestTask.Start();
+        }
+
+        internal static void AddToQueue(AccountingRequest request)
+        {
+            Program.incomingRequests.Add(request);
         }
 
         private static void SendMessage(AccountingRequest request)

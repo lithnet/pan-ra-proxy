@@ -24,6 +24,9 @@ namespace Lithnet.Pan.RAProxy
         // Messaging errors
         public const int EventIDMessageSendFailure = 3201;
 
+        // Info
+        public const int EventIDAccountingRequestRecieved = 4001;
+
 
     }
 }

@@ -20,5 +20,12 @@ namespace Lithnet.Pan.RAProxy.RadiusAccounting
             this.IPAddress = ipaddress;
             this.Attributes = new ReadOnlyCollection<RadiusAttribute>(attributes);
         }
+
+        /// <summary>Returns a string that represents the current object.</summary>
+        /// <returns>A string that represents the current object.</returns>
+        public override string ToString()
+        {
+            return $"Source IP: {this.IPAddress}\nAttributes:\n{string.Join("\n", this.Attributes.Select(t => t.ToString()))}";
+        }
     }
 }
