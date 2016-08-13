@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
+     xmlns:netfx="http://schemas.microsoft.com/wix/NetFxExtension">
+  <Product Id="*"
+           Name="Lithnet RADIUS Accounting Proxy for Palo Alto Firewall"
+           Language="1033"
+           Version="1.0.6066"
+           Manufacturer="Lithnet"
+           UpgradeCode="62b975ca3c9f4a4299c34d96834fded9">
+    <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" Platform="x64" />
+    <Media Id="1" Cabinet="Cab1.cab" EmbedCab="yes" />
+
+    <MajorUpgrade Schedule="afterInstallInitialize" AllowSameVersionUpgrades="yes"
+                DowngradeErrorMessage="A later version of [ProductName] is already installed" />
+
+    <PropertyRef Id="WIX_IS_NETFRAMEWORK_46_OR_LATER_INSTALLED"/>
+    <Condition Message="This application requires .NET Framework 4.6. Please install the .NET Framework then run this installer again.">
+      <![CDATA[Installed OR WIX_IS_NETFRAMEWORK_46_OR_LATER_INSTALLED]]>
+    </Condition>
+
+    <Property Id="SERVICE_NAME" Secure="yes" Value="panraproxy"/>
+
+    <Property Id="WIXUI_INSTALLDIR" Value="APPROOTDIR" />
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFiles64Folder" >
+        <Directory Id="LITHNETROOTDIR" Name="Lithnet">
+          <Directory Id="APPROOTDIR" Name="PAN RA Proxy">
+          </Directory>
+        </Directory>
+      </Directory>
+    </Directory>
+
+    <UI>
+      <UIRef Id="WixUI_InstallDir" />
+
+      <!-- Skip license dialog -->
+      <Publish Dialog="WelcomeDlg"
+               Control="Next"
+               Event="NewDialog"
+               Value="InstallDirDlg"
+               Order="2">1</Publish>
+      <Publish Dialog="InstallDirDlg"
+               Control="Back"
+               Event="NewDialog"
+               Value="WelcomeDlg"
+               Order="2">1</Publish>
+    </UI>
+    
+    <Feature Id="RAProxy" Title="RADIUS Accounting Proxy for Palo Alto Firewall" Level="1">
+      <ComponentGroupRef Id="Binaries" />
+    </Feature>
+  </Product>
+</Wix>
