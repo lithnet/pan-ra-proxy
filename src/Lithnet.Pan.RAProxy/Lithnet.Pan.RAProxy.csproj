@@ -57,7 +57,7 @@
     <Compile Include="Exceptions\PanApiException.cs" />
     <Compile Include="Logging.cs" />
     <Compile Include="PanApi\ApiInterface.cs" />
-    <Compile Include="AccountingListener.cs" />
+    <Compile Include="RadiusAccounting\AccountingListener.cs" />
     <Compile Include="PanApi\Entry.cs" />
     <Compile Include="PanApi\Logout.cs" />
     <Compile Include="PanApi\Login.cs" />
@@ -65,7 +65,7 @@
     <Compile Include="PanApi\Payload.cs" />
     <Compile Include="ConfigSections\RAProxyConfigurationSection.cs" />
     <Compile Include="RadiusAccounting\AccountingRequest.cs" />
-    <Compile Include="RadiusAttribute.cs" />
+    <Compile Include="RadiusAccounting\RadiusAttribute.cs" />
     <Compile Include="RAProxyService.cs">
       <SubType>Component</SubType>
     </Compile>
