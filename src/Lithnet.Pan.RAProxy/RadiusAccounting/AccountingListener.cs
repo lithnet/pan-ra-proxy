@@ -108,9 +108,13 @@ namespace Lithnet.Pan.RAProxy
 
             // We're all good, store the attributes.
             List<RadiusAttribute> attributes = RadiusAttribute.ParseAttributeMessage(data, 20);
+            foreach (var item in attributes)
+            {
+                Debug.WriteLine($" | " +item.ToString());
+            }
 
             // Send the attributes array on to the necessary interface
-            AccountingRequest(sender, attributes);
+            //AccountingRequest(sender, attributes);
 
             // Send a response acknowledgement
             byte[] responsePacket = new byte[20];
@@ -189,164 +193,5 @@ namespace Lithnet.Pan.RAProxy
             // Replace the response authenticator token with the calculated result
             Array.Copy(responseAuthenticator, 0, response, 4, 16);
         }
-
-        public static void AccountingRequest(IPAddress sender, Dictionary<int, byte[]> attributes)
-        {
-            foreach (var item in attributes)
-            {
-                // Get the string description of the attribute type
-                string typeString = GetAttributeType(item.Key);
-                if (string.IsNullOrEmpty(typeString))
-                    typeString = "Type #" + item.Key.ToString();
-
-                // Convert the attribute value to human-readable output
-                string valueString;
-                switch (item.Key)
-                {
-                    case 1:
-                    case 2:
-                    case 3:
-                    case 31:
-                    case 44:
-                        // String attributes
-                        valueString = Encoding.ASCII.GetString(item.Value);
-                        break;
-
-                    case 5:
-                    case 46:
-                    case 41:
-                        // Numeric attributes
-                        valueString = BitConverter.ToUInt16(item.Value, 0).ToString();
-                        break;
-
-                    default:
-                        // Unknown attributes
-                        StringBuilder valueBuilder = new StringBuilder();
-                        for (int i = 0; i < item.Value.Length; i++)
-                        {
-                            valueBuilder.Append(Convert.ToUInt16(item.Value[i]).ToString());
-                        }
-                        valueString = valueBuilder.ToString();
-                        break;
-                }
-                Debug.WriteLine($" | Attribute: {typeString}, Value: {valueString}");
-            }
-        }
-
-        public static string GetAttributeType(int attr)
-        {
-            switch (attr)
-            {
-                case 1:
-                    return "User-Name";
-                case 2:
-                    return "User-Password";
-                case 3:
-                    return "CHAP-Password";
-                case 4:
-                    return "NAS-IP-Address";
-                case 5:
-                    return "NAS-Port";
-                case 6:
-                    return "Service-Type";
-                case 7:
-                    return "Framed-Protocol";
-                case 8:
-                    return "Framed-IP-Address";
-                case 9:
-                    return "Framed-IP-Netmask";
-                case 10:
-                    return "Framed-Routing";
-                case 11:
-                    return "Filter-Id";
-                case 12:
-                    return "Framed-MTU";
-                case 13:
-                    return "Framed-Compression";
-                case 14:
-                    return "Login-IP-Host";
-                case 15:
-                    return "Login-Service";
-                case 16:
-                    return "Login-TCP-Port";
-                case 18:
-                    return "Reply-Message";
-                case 19:
-                    return "Callback-Number";
-                case 20:
-                    return "Callback-Id";
-                case 22:
-                    return "Framed-Route";
-                case 23:
-                    return "Framed-IPX-Network";
-                case 24:
-                    return "State";
-                case 25:
-                    return "Class";
-                case 26:
-                    return "Vendor-Specific";
-                case 27:
-                    return "Session-Timeout";
-                case 28:
-                    return "Idle-Timeout";
-                case 29:
-                    return "Termination-Action";
-                case 30:
-                    return "Called-Station-Id";
-                case 31:
-                    return "Calling-Station-Id";
-                case 32:
-                    return "NAS-Identifier";
-                case 33:
-                    return "Proxy-State";
-                case 34:
-                    return "Login-LAT-Service";
-                case 35:
-                    return "Login-LAT-Node";
-                case 36:
-                    return "Login-LAT-Group";
-                case 37:
-                    return "Framed-AppleTalk-Link";
-                case 38:
-                    return "Framed-AppleTalk-Network";
-                case 39:
-                    return "Framed-AppleTalk-Zone";
-                case 40:
-                    return "Acct-Status-Type";
-                case 41:
-                    return "Acct-Delay-Time";
-                case 42:
-                    return "Acct-Input-Octets";
-                case 43:
-                    return "Acct-Output-Octets";
-                case 44:
-                    return "Acct-Session-Id";
-                case 45:
-                    return "Acct-Authentic";
-                case 46:
-                    return "Acct-Session-Time";
-                case 47:
-                    return "Acct-Input-Packets";
-                case 48:
-                    return "Acct-Output-Packets";
-                case 49:
-                    return "Acct-Terminate-Cause";
-                case 50:
-                    return "Acct-Multi-Session-Id";
-                case 51:
-                    return "Acct-Link-Count";
-                case 60:
-                    return "CHAP-Challenge";
-                case 61:
-                    return "NAS-Port-Type";
-                case 62:
-                    return "Port-Limit";
-                case 63:
-                    return "Login-LAT-Port";
-                default:
-                    return null;
-            }
-        }
-        
     }
 }

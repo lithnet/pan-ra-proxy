@@ -63,6 +63,11 @@ namespace Lithnet.Pan.RAProxy
             
         }
 
+        public override String ToString()
+        {
+            return GetAttributeTypeString(Type) + ": " + ValueAsString;
+        }
+
         /// <summary>
         /// Given a type code and value block as bytes, parse the value according to the data definition for
         /// RADIUS attributes (RFC2865/RFC2866) and return a new RadiusAttribute entity.
@@ -270,6 +275,121 @@ namespace Lithnet.Pan.RAProxy
                     return RadiusAttributeValueDatatype.String;
                 default:
                     return RadiusAttributeValueDatatype.ByteArray;
+            }
+        }
+
+        public static string GetAttributeTypeString(RadiusAttributeType type)
+        {
+            switch (type)
+            {
+                case RadiusAttributeType.UserName:
+                    return "User-Name";
+                case RadiusAttributeType.UserPassword:
+                    return "User-Password";
+                case RadiusAttributeType.CHAPPassword:
+                    return "CHAP-Password";
+                case RadiusAttributeType.NASIPAddress:
+                    return "NAS-IP-Address";
+                case RadiusAttributeType.NASPort:
+                    return "NAS-Port";
+                case RadiusAttributeType.ServiceType:
+                    return "Service-Type";
+                case RadiusAttributeType.FramedProtocol:
+                    return "Framed-Protocol";
+                case RadiusAttributeType.FramedIPAddress:
+                    return "Framed-IP-Address";
+                case RadiusAttributeType.FramedIPNetmask:
+                    return "Framed-IP-Netmask";
+                case RadiusAttributeType.FramedRouting:
+                    return "Framed-Routing";
+                case RadiusAttributeType.FilterId:
+                    return "Filter-Id";
+                case RadiusAttributeType.FramedMTU:
+                    return "Framed-MTU";
+                case RadiusAttributeType.FramedCompression:
+                    return "Framed-Compression";
+                case RadiusAttributeType.LoginIPHost:
+                    return "Login-IP-Host";
+                case RadiusAttributeType.LoginService:
+                    return "Login-Service";
+                case RadiusAttributeType.LoginTCPPort:
+                    return "Login-TCP-Port";
+                case RadiusAttributeType.ReplyMessage:
+                    return "Reply-Message";
+                case RadiusAttributeType.CallbackNumber:
+                    return "Callback-Number";
+                case RadiusAttributeType.CallbackId:
+                    return "Callback-Id";
+                case RadiusAttributeType.FramedRoute:
+                    return "Framed-Route";
+                case RadiusAttributeType.FramedIPXNetwork:
+                    return "Framed-IPX-Network";
+                case RadiusAttributeType.State:
+                    return "State";
+                case RadiusAttributeType.Class:
+                    return "Class";
+                case RadiusAttributeType.VendorSpecific:
+                    return "Vendor-Specific";
+                case RadiusAttributeType.SessionTimeout:
+                    return "Session-Timeout";
+                case RadiusAttributeType.IdleTimeout:
+                    return "Idle-Timeout";
+                case RadiusAttributeType.TerminationAction:
+                    return "Termination-Action";
+                case RadiusAttributeType.CalledStationId:
+                    return "Called-Station-Id";
+                case RadiusAttributeType.CallingStationId:
+                    return "Calling-Station-Id";
+                case RadiusAttributeType.NASIdentifier:
+                    return "NAS-Identifier";
+                case RadiusAttributeType.ProxyState:
+                    return "Proxy-State";
+                case RadiusAttributeType.LoginLATService:
+                    return "Login-LAT-Service";
+                case RadiusAttributeType.LoginLATNode:
+                    return "Login-LAT-Node";
+                case RadiusAttributeType.LoginLATGroup:
+                    return "Login-LAT-Group";
+                case RadiusAttributeType.FramedAppleTalkLink:
+                    return "Framed-AppleTalk-Link";
+                case RadiusAttributeType.FramedAppleTalkNetwork:
+                    return "Framed-AppleTalk-Network";
+                case RadiusAttributeType.FramedAppleTalkZone:
+                    return "Framed-AppleTalk-Zone";
+                case RadiusAttributeType.AcctStatusType:
+                    return "Acct-Status-Type";
+                case RadiusAttributeType.AcctDelayTime:
+                    return "Acct-Delay-Time";
+                case RadiusAttributeType.AcctInputOctets:
+                    return "Acct-Input-Octets";
+                case RadiusAttributeType.AcctOutputOctets:
+                    return "Acct-Output-Octets";
+                case RadiusAttributeType.AcctSessionId:
+                    return "Acct-Session-Id";
+                case RadiusAttributeType.AcctAuthentic:
+                    return "Acct-Authentic";
+                case RadiusAttributeType.AcctSessionTime:
+                    return "Acct-Session-Time";
+                case RadiusAttributeType.AcctInputPackets:
+                    return "Acct-Input-Packets";
+                case RadiusAttributeType.AcctOutputPackets:
+                    return "Acct-Output-Packets";
+                case RadiusAttributeType.AcctTerminateCause:
+                    return "Acct-Terminate-Cause";
+                case RadiusAttributeType.AcctMultiSessionId:
+                    return "Acct-Multi-Session-Id";
+                case RadiusAttributeType.AcctLinkCount:
+                    return "Acct-Link-Count";
+                case RadiusAttributeType.CHAPChallenge:
+                    return "CHAP-Challenge";
+                case RadiusAttributeType.NASPortType:
+                    return "NAS-Port-Type";
+                case RadiusAttributeType.PortLimit:
+                    return "Port-Limit";
+                case RadiusAttributeType.LoginLATPort:
+                    return "Login-LAT-Port";
+                default:
+                    return type.ToString();
             }
         }
 
