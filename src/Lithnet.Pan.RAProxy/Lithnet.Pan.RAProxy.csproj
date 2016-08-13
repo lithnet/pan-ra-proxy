@@ -50,6 +50,7 @@
     <Compile Include="ConfigSections\RadiusServerCollection.cs" />
     <Compile Include="ConfigSections\RadiusClientSection.cs" />
     <Compile Include="ConfigSections\RadiusServerSection.cs" />
+    <Compile Include="Exceptions\MissingValueException.cs" />
     <Compile Include="Exceptions\InvalidRadiusAttributeException.cs" />
     <Compile Include="Exceptions\UnknownRadiusServerException.cs" />
     <Compile Include="Extensions.cs" />
@@ -63,6 +64,7 @@
     <Compile Include="PanApi\Message.cs" />
     <Compile Include="PanApi\Payload.cs" />
     <Compile Include="ConfigSections\RAProxyConfigurationSection.cs" />
+    <Compile Include="RadiusAccounting\AccountingRequest.cs" />
     <Compile Include="RadiusAttribute.cs" />
     <Compile Include="RAProxyService.cs">
       <SubType>Component</SubType>

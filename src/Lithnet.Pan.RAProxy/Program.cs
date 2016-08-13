@@ -6,12 +6,23 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Configuration;
 using System.Diagnostics;
+using System.Threading;
 
 namespace Lithnet.Pan.RAProxy
 {
+    using System.Collections.Concurrent;
+    using System.Net;
+    using RadiusAccounting;
+
     public static class Program
     {
         private static AccountingListener listener;
+
+        private static CancellationTokenSource cancellationToken;
+
+        private static BlockingCollection<AccountingRequest> incomingRequests;
+
+        private static Task requestTask;
 
         internal const string EventSourceName = "PanRAProxy";
 
@@ -37,6 +48,9 @@ namespace Lithnet.Pan.RAProxy
 
         internal static void Start()
         {
+            Program.cancellationToken = new CancellationTokenSource();
+
+
             if (!EventLog.SourceExists(Program.EventSourceName))
             {
                 EventLog.CreateEventSource(new EventSourceCreationData(Program.EventSourceName, "Application"));
@@ -48,32 +62,122 @@ namespace Lithnet.Pan.RAProxy
                 EventLog.WriteEntry(Program.EventSourceName, "Server certificate validation has been disabled. The SSL certificate on the Palo Alto device will not be validated", EventLogEntryType.Warning, Logging.EventIDServerCertificateValidationDisabled);
             }
 
+            Program.StartQueue();
+
             Program.listener = new AccountingListener(Config.AccountingPort);
             Program.listener.Start();
         }
 
         internal static void Stop()
         {
+            if (Program.cancellationToken != null)
+            {
+                Program.cancellationToken.Cancel();
+            }
+
+            if (Program.requestTask != null && Program.requestTask.Status == TaskStatus.Running)
+            {
+                Program.requestTask.Wait(10000);
+            }
+
             Program.listener.Stop();
         }
 
-        private static void TestMessage()
+        private static void StartQueue()
         {
-            UidMessage message = new UidMessage();
-            message.Payload = new Payload();
-            message.Payload.Login = new Login();
-            message.Payload.Login.Entries = new List<Entry>();
-            message.Payload.Login.Entries.Add(new Entry() { IpAddress = "192.168.0.1", Username = "test\\ryan" });
+            Program.incomingRequests = new BlockingCollection<RadiusAccounting.AccountingRequest>();
 
-            message.Send();
+            Program.requestTask = new Task(() =>
+            {
+                try
+                {
+                    foreach (AccountingRequest request in Program.incomingRequests.GetConsumingEnumerable(Program.cancellationToken.Token))
+                    {
+                        try
+                        {
+                            Program.SendMessage(request);
+                        }
+                        catch (MissingValueException ex)
+                        {
+                            if (Config.DebuggingEnabled)
+                            {
+                                EventLog.WriteEntry(Program.EventSourceName, $"A radius accounting packet was discarded because it had incomplete information.\n{ex.Message}", EventLogEntryType.Warning, Logging.EventIDMessageSendFailure);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            EventLog.WriteEntry(Program.EventSourceName, $"An error occured while submitting the user-id update\n{ex.Message}\n{ex.StackTrace}", EventLogEntryType.Error, Logging.EventIDMessageSendFailure);
+                        }
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                }
 
-            message = new UidMessage();
-            message.Payload = new Payload();
-            message.Payload.Logout = new Logout();
-            message.Payload.Logout.Entries = new List<Entry>();
-            message.Payload.Logout.Entries.Add(new Entry() { IpAddress = "192.168.0.1", Username = "test\\ryan" });
+            }, Program.cancellationToken.Token);
 
-            message.Send();
+            Program.requestTask.Start();
+        }
+
+        private static void SendMessage(AccountingRequest request)
+        {
+            RadiusAttribute accountingType = request.Attributes.FirstOrDefault(t => t.Type == RadiusAttribute.RadiusAttributeType.AcctStatusType);
+            RadiusAttribute framedIP = request.Attributes.FirstOrDefault(t => t.Type == RadiusAttribute.RadiusAttributeType.FramedIPAddress);
+            RadiusAttribute username = request.Attributes.FirstOrDefault(t => t.Type == RadiusAttribute.RadiusAttributeType.UserName);
+
+            if (accountingType == null)
+            {
+                throw new MissingValueException("The Acct-Status-Type attribute was not present");
+            }
+
+            if (framedIP == null)
+            {
+                throw new MissingValueException("The Framed-IP-Address attribute was not present");
+            }
+
+            if (username == null)
+            {
+                throw new MissingValueException("The Username attribute was not present");
+            }
+
+            Entry e = new Entry
+            {
+                Username = username.ValueAsString,
+                IpAddress = framedIP.ValueAsString
+            };
+
+            UidMessage message = new UidMessage { Payload = new Payload() };
+
+            switch (accountingType.ValueAsInt)
+            {
+                case 1:
+                    // Accounting start
+                    message.Payload.Login = new Login();
+                    message.Payload.Login.Entries.Add(e);
+                    break;
+
+                case 2:
+                    // Accounting stop
+                    message.Payload.Logout = new Logout();
+                    message.Payload.Logout.Entries.Add(e);
+                    break;
+
+                default:
+                    return;
+            }
+
+            try
+            {
+                message.Send();
+            }
+            catch (PanApiException ex)
+            {
+                EventLog.WriteEntry(Program.EventSourceName, $"The UserID API called failed\nUsername:{username.ValueAsString}\nIP address:{framedIP.ValueAsString}\n{ex.Message}\n{ex.StackTrace}\n{ex.Detail}", EventLogEntryType.Error, Logging.EventIDMessageSendFailure);
+            }
+            catch (Exception ex)
+            {
+                EventLog.WriteEntry(Program.EventSourceName, $"An error occured while submitting the user-id update\nUsername:{username.ValueAsString}\nIP address:{framedIP.ValueAsString}\n{ex.Message}\n{ex.StackTrace}", EventLogEntryType.Error, Logging.EventIDMessageSendFailure);
+            }
         }
     }
 }

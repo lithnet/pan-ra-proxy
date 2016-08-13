@@ -31,7 +31,7 @@ namespace Lithnet.Pan.RAProxy
             catch (Exception ex)
             {
                 EventLog.WriteEntry(Program.EventSourceName, $"The attempt to send the update failed\n{ex.Message}\n{ex.Source}\n", EventLogEntryType.Error, Logging.EventIDMessageSendException);
-                return;
+                throw;
             }
 
             try
