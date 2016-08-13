@@ -10,54 +10,70 @@ using System.Threading.Tasks;
 
 namespace Lithnet.Pan.RAProxy
 {
-    class AccountingListener
+    internal class AccountingListener
     {
+        private bool shutdown;
+
+        public int Port { get; set; }
+
+        public AccountingListener()
+        {
+            this.Port = 1813;
+        }
 
         /// <summary>
         /// Instantiate the listener service on the designated host and port
         /// </summary>
         public AccountingListener(int usePort = 1813)
         {
-            // Structure for received data
-            byte[] receiveByteArray;
+            this.Port = usePort;
 
-            // Flag to indicate server is still receiving
-            bool shutdown = false;
+        }
 
+        public void Start()
+        {
             // Create a TCP/IP socket for listener and responses
-            UdpClient listener = new UdpClient(usePort);
+            UdpClient listener = new UdpClient(this.Port);
             Socket sendSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
 
             // End point
-            IPEndPoint sourceEP = new IPEndPoint(IPAddress.Any, usePort);
+            IPEndPoint sourceEP = new IPEndPoint(IPAddress.Any, this.Port);
 
             // Listen for incoming connections.
             try
             {
-                while (!shutdown)
+                Debug.WriteLine($"Server listening on port {this.Port}.");
+
+                while (!this.shutdown)
                 {
-                    Debug.WriteLine("Server listening on port {0}.", usePort);
-                    
-                    receiveByteArray = listener.Receive(ref sourceEP);
-                    Debug.WriteLine("Received packet.", sourceEP.Address.ToString());
+                    byte[] receiveByteArray = listener.Receive(ref sourceEP);
+
+                    Debug.WriteLine($"Received packet from {sourceEP.Address}");
 
                     // If this is a valid sized RADIUS packet, try to parse, otherwise silently ignore
                     if (receiveByteArray.Length >= 20)
                     {
-                        byte[] response = ParseMessage(receiveByteArray, sourceEP.Address);
+                        byte[] response = this.ParseMessage(receiveByteArray, sourceEP.Address);
+
                         if (response.Length > 0)
                         {
                             sendSocket.SendTo(response, sourceEP);
                         }
                     }
-                    
+
                 }
             }
             catch (Exception e)
             {
                 Debug.WriteLine(e.ToString());
             }
+
             listener.Close();
+        }
+
+        public void Stop()
+        {
+            this.shutdown = true;
         }
 
         /// <summary>
@@ -81,7 +97,7 @@ namespace Lithnet.Pan.RAProxy
                 Debug.WriteLine(" - Ignored: Not AccountingRequest type.");
                 return null;
             }
-            Debug.WriteLine(" - AccountingRequest #{0} with length {1}.", requestIdentifier, requestLength);
+            Debug.WriteLine($" - AccountingRequest #{requestIdentifier} with length {requestLength}.");
 
             // Check the authenticator token matches the shared secret, otherwise do nothing
             if (!AuthenticateRequest(data, sender))
@@ -150,8 +166,8 @@ namespace Lithnet.Pan.RAProxy
             Array.Copy(data, 4, requestAuthenticator, 0, 16);
 
             // Use the sender's IP to obtain the shared secret
-            String secret = GetSecretByIP(sender);
-            if (String.IsNullOrEmpty(secret))
+            string secret = Config.GetSecretForIP(sender);
+            if (string.IsNullOrEmpty(secret))
                 return false;
 
             // To obtain the MD5 authentication hash, we need to blank out the authenticator bits with zeros
@@ -181,7 +197,7 @@ namespace Lithnet.Pan.RAProxy
             byte[] responseAuthenticator;
 
             // Determine the shared secret to use from the sender's IP
-            String secret = GetSecretByIP(sender);
+            string secret = Config.GetSecretForIP(sender);
             byte[] secretBytes = Encoding.ASCII.GetBytes(secret);
 
             // Obtain the MD5 authentication hash
@@ -196,17 +212,6 @@ namespace Lithnet.Pan.RAProxy
 
             // Replace the response authenticator token with the calculated result
             Array.Copy(responseAuthenticator, 0, response, 4, 16);
-            
-        }
-
-        /// <summary>
-        /// Boilerplate function to obtain the secret string per IP address
-        /// </summary>
-        /// <param name="sender">Source IP address</param>
-        /// <returns>String representing the shared secret, if this is a valid IP</returns>
-        private static String GetSecretByIP(IPAddress sender)
-        {
-            return "secret";
         }
 
         public static void AccountingRequest(IPAddress sender, Dictionary<int, byte[]> attributes)
@@ -214,12 +219,12 @@ namespace Lithnet.Pan.RAProxy
             foreach (var item in attributes)
             {
                 // Get the string description of the attribute type
-                String typeString = GetAttributeType(item.Key);
-                if (String.IsNullOrEmpty(typeString))
+                string typeString = GetAttributeType(item.Key);
+                if (string.IsNullOrEmpty(typeString))
                     typeString = "Type #" + item.Key.ToString();
 
                 // Convert the attribute value to human-readable output
-                String valueString;
+                string valueString;
                 switch (item.Key)
                 {
                     case 1:
@@ -230,12 +235,14 @@ namespace Lithnet.Pan.RAProxy
                         // String attributes
                         valueString = Encoding.ASCII.GetString(item.Value);
                         break;
+
                     case 5:
                     case 46:
                     case 41:
                         // Numeric attributes
                         valueString = BitConverter.ToUInt16(item.Value, 0).ToString();
                         break;
+
                     default:
                         // Unknown attributes
                         StringBuilder valueBuilder = new StringBuilder();
@@ -246,11 +253,11 @@ namespace Lithnet.Pan.RAProxy
                         valueString = valueBuilder.ToString();
                         break;
                 }
-                Debug.WriteLine(" | Attribute: {0}, Value: {1}", typeString, valueString);
+                Debug.WriteLine($" | Attribute: {typeString}, Value: {valueString}");
             }
         }
 
-        public static String GetAttributeType(int attr)
+        public static string GetAttributeType(int attr)
         {
             switch (attr)
             {
