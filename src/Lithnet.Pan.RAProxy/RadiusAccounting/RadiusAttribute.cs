@@ -17,7 +17,7 @@ namespace Lithnet.Pan.RAProxy
 
         // Native datatypes for value
         public String ValueAsString { get; set; }
-        public int ValueAsInt { get; set; }
+        public uint ValueAsInt { get; set; }
         public byte[] ValueAsByteArray { get; set; }
         public IPAddress ValueAsIPAddress { get; set; }
 
@@ -80,7 +80,7 @@ namespace Lithnet.Pan.RAProxy
             RadiusAttribute newAttribute = new RadiusAttribute();
             newAttribute.Type = (RadiusAttributeType)type;
 
-            if (value.Length > 0)
+            if (value?.Length > 0)
             {
                 try
                 {
@@ -101,8 +101,9 @@ namespace Lithnet.Pan.RAProxy
                             newAttribute.ValueAsString = (String)newAttribute.Value;
                             break;
                         case RadiusAttributeValueDatatype.Integer:
-                            newAttribute.Value = BitConverter.ToUInt16(value, 0);
-                            newAttribute.ValueAsInt = (int)newAttribute.Value;
+                            Array.Reverse(value);
+                            newAttribute.Value = BitConverter.ToUInt32(value, 0);
+                            newAttribute.ValueAsInt = BitConverter.ToUInt32(value, 0);
                             newAttribute.ValueAsString = newAttribute.ValueAsInt.ToString();
                             break;
                         case RadiusAttributeValueDatatype.IP:
@@ -114,7 +115,7 @@ namespace Lithnet.Pan.RAProxy
                 }
                 catch (Exception e)
                 {
-                    throw new InvalidRadiusAttributeException($"Unable to parse attribute value data: {e.Message}");
+                    throw new InvalidRadiusAttributeException($"Unable to parse attribute value data: {e.Message}", e);
                 }
             }
 
@@ -137,11 +138,11 @@ namespace Lithnet.Pan.RAProxy
             int attributeLength;
             byte[] attributeBytes;
             Dictionary<int, byte[]> attributes = new Dictionary<int, byte[]>();
-            while (byteIndex + 2 < rawAttributeMessage.Length)
+            while (byteIndex + 2 <= rawAttributeMessage.Length)
             {
                 attributeType = Convert.ToUInt16(rawAttributeMessage[byteIndex]);
                 attributeLength = Convert.ToUInt16(rawAttributeMessage[byteIndex+1]);
-                if (attributeLength > 2 && attributeLength + byteIndex < rawAttributeMessage.Length)
+                if (attributeLength > 2 && attributeLength + byteIndex <= rawAttributeMessage.Length)
                 {
                     attributeBytes = new byte[attributeLength - 2];
                     Array.Copy(rawAttributeMessage, byteIndex+2, attributeBytes, 0, attributeLength - 2);
@@ -150,6 +151,7 @@ namespace Lithnet.Pan.RAProxy
                 else
                 {
                     attributeBytes = null;
+                    byteIndex += 2;
                 }
 
                 RadiusAttribute attribute = ParseAttributeValue(attributeType, attributeBytes);

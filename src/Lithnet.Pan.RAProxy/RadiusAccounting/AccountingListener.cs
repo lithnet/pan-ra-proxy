@@ -7,6 +7,7 @@ using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using Lithnet.Pan.RAProxy.RadiusAccounting;
 
 namespace Lithnet.Pan.RAProxy
 {
@@ -55,7 +56,7 @@ namespace Lithnet.Pan.RAProxy
                     {
                         byte[] response = this.ParseMessage(receiveByteArray, sourceEP.Address);
 
-                        if (response.Length > 0)
+                        if (response?.Length > 0)
                         {
                             sendSocket.SendTo(response, sourceEP);
                         }
@@ -114,7 +115,7 @@ namespace Lithnet.Pan.RAProxy
             }
 
             // Send the attributes array on to the necessary interface
-            //AccountingRequest(sender, attributes);
+            Program.AddToQueue(new AccountingRequest(sender, attributes));
 
             // Send a response acknowledgement
             byte[] responsePacket = new byte[20];
