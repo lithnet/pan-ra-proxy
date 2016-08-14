@@ -66,7 +66,7 @@ namespace Lithnet.Pan.RAProxy
             Program.StartQueue();
 
             Program.listener = new AccountingListener(Config.AccountingPort);
-            Program.listener.Start();
+            Program.listener.Start(Program.cancellationToken.Token);
         }
 
         internal static void Stop()
