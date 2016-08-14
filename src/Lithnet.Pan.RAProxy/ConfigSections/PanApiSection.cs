@@ -16,22 +16,13 @@ namespace Lithnet.Pan.RAProxy
         {
             get
             {
-                if (this.uri == null)
-                {
-                    string uristring = (string)this["url"];
-
-                    if (uristring != null)
-                    {
-                        this.uri = new Uri(uristring);
-                    }
-                }
-
-                return this.uri;
+                return (Uri)this["url"];
             }
 
             set
             {
-                this["url"] = value?.ToString();
+                this["url"] = value;
+                
             }
         }
 
