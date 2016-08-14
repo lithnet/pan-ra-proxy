@@ -14,12 +14,9 @@ namespace Lithnet.Pan.RAProxy
 {
     internal class AccountingListener
     {
-        private bool shutdown;
-
-        private ManualResetEvent _receiveDone = new ManualResetEvent(false);
 
         public int Port { get; set; }
-
+      
         public AccountingListener()
         {
             this.Port = 1813;
@@ -34,31 +31,33 @@ namespace Lithnet.Pan.RAProxy
 
         }
 
-        public void Start()
+        public void Start(CancellationToken token)
         {
-            // Create a TCP/IP socket for listener
-            UdpClient listener = new UdpClient(this.Port);
-
-            // Listen for incoming connections.
-            try
+            Debug.WriteLine($"RADIUS accounting server listening on port {this.Port}.");
+            Task.Run(async () =>
             {
-                Debug.WriteLine($"Server listening on port {this.Port}.");
-
-                while (!this.shutdown)
+                using (UdpClient listener = new UdpClient(this.Port))
                 {
-                    _receiveDone.Reset();
-                    listener.BeginReceive(new AsyncCallback(ReceiveCallback), listener);
+                    while (!token.IsCancellationRequested)
+                    {
+                        var receiveResult = await listener.ReceiveAsync();
+                        Debug.WriteLine($"Received packet from {receiveResult.RemoteEndPoint.Address}:{receiveResult.RemoteEndPoint.Port}");
+                        
+                        // If this is a valid sized RADIUS packet, try to parse, otherwise silently ignore
+                        if (receiveResult.Buffer?.Length >= 20)
+                        {
+                            byte[] response = ParseRequestMessage(receiveResult.Buffer, receiveResult.RemoteEndPoint.Address);
 
-                    _receiveDone.WaitOne();
-                   
+                            if (response?.Length > 0)
+                            {
+                                Socket sendSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+                                sendSocket.SendTo(response, receiveResult.RemoteEndPoint);
+                            }
+                        }
+                    }
                 }
-            }
-            catch (Exception e)
-            {
-                Debug.WriteLine(e.ToString());
-            }
-
-            listener.Close();
+            }, token);
+            
         }
 
         /// <summary>
@@ -73,25 +72,12 @@ namespace Lithnet.Pan.RAProxy
             // End point
             IPEndPoint sourceEP = new IPEndPoint(IPAddress.Any, this.Port);
 
-            byte[] receiveByteArray = listener.EndReceive(asyncResult, ref sourceEP);
-            Debug.WriteLine($"Received packet from {sourceEP.Address}:{sourceEP.Port}");
-
-            // If this is a valid sized RADIUS packet, try to parse, otherwise silently ignore
-            if (receiveByteArray?.Length >= 20)
-            {
-                byte[] response = ParseRequestMessage(receiveByteArray, sourceEP.Address);
-
-                if (response?.Length > 0)
-                {
-                    Socket sendSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-                    sendSocket.SendTo(response, sourceEP);
-                }
-            }
+            
         }
 
         public void Stop()
         {
-            this.shutdown = true;
+            Debug.WriteLine($"RADIUS accounting server shutdown.");
         }
 
         /// <summary>
