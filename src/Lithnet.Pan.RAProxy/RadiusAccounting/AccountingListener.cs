@@ -8,12 +8,15 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Lithnet.Pan.RAProxy.RadiusAccounting;
+using System.Threading;
 
 namespace Lithnet.Pan.RAProxy
 {
     internal class AccountingListener
     {
         private bool shutdown;
+
+        private ManualResetEvent _receiveDone = new ManualResetEvent(false);
 
         public int Port { get; set; }
 
@@ -33,12 +36,8 @@ namespace Lithnet.Pan.RAProxy
 
         public void Start()
         {
-            // Create a TCP/IP socket for listener and responses
+            // Create a TCP/IP socket for listener
             UdpClient listener = new UdpClient(this.Port);
-            Socket sendSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-
-            // End point
-            IPEndPoint sourceEP = new IPEndPoint(IPAddress.Any, this.Port);
 
             // Listen for incoming connections.
             try
@@ -47,21 +46,11 @@ namespace Lithnet.Pan.RAProxy
 
                 while (!this.shutdown)
                 {
-                    byte[] receiveByteArray = listener.Receive(ref sourceEP);
+                    _receiveDone.Reset();
+                    listener.BeginReceive(new AsyncCallback(ReceiveCallback), listener);
 
-                    Debug.WriteLine($"Received packet from {sourceEP.Address}");
-
-                    // If this is a valid sized RADIUS packet, try to parse, otherwise silently ignore
-                    if (receiveByteArray.Length >= 20)
-                    {
-                        byte[] response = this.ParseMessage(receiveByteArray, sourceEP.Address);
-
-                        if (response?.Length > 0)
-                        {
-                            sendSocket.SendTo(response, sourceEP);
-                        }
-                    }
-
+                    _receiveDone.WaitOne();
+                   
                 }
             }
             catch (Exception e)
@@ -70,6 +59,34 @@ namespace Lithnet.Pan.RAProxy
             }
 
             listener.Close();
+        }
+
+        /// <summary>
+        /// Event handler method to be fired when the socket receives a data packet.
+        /// </summary>
+        /// <param name="asyncResult">State variable passed from asynchronous receive</param>
+        private void ReceiveCallback(IAsyncResult asyncResult)
+        {
+            // UDP client
+            UdpClient listener = (UdpClient)asyncResult.AsyncState;
+
+            // End point
+            IPEndPoint sourceEP = new IPEndPoint(IPAddress.Any, this.Port);
+
+            byte[] receiveByteArray = listener.EndReceive(asyncResult, ref sourceEP);
+            Debug.WriteLine($"Received packet from {sourceEP.Address}:{sourceEP.Port}");
+
+            // If this is a valid sized RADIUS packet, try to parse, otherwise silently ignore
+            if (receiveByteArray?.Length >= 20)
+            {
+                byte[] response = ParseRequestMessage(receiveByteArray, sourceEP.Address);
+
+                if (response?.Length > 0)
+                {
+                    Socket sendSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+                    sendSocket.SendTo(response, sourceEP);
+                }
+            }
         }
 
         public void Stop()
@@ -86,14 +103,14 @@ namespace Lithnet.Pan.RAProxy
         /// <param name="data">Incoming data packet</param>
         /// <param name="sender">Source IP address</param>
         /// <returns>Acknowledgement response data, if successfully parsed</returns>
-        private byte[] ParseMessage(byte[] data, IPAddress sender)
+        private static byte[] ParseRequestMessage(byte[] data, IPAddress sender)
         {
             byte requestType = data[0];                         // Type code is first 8 bits, 4 = AccountingRequest, 5 = AccountingResponse
             byte requestIdentifier = data[1];                   // Identifier is next 8 bits, representing sequence of message
             int requestLength = (data[2] << 8) | data[3];       // Length is next 16 bits, representing packet length
 
             // Determine if the packet contains Accounting-Request type code (4), otherwise do nothing
-            if (requestType != (byte)4)
+            if (requestType != 4)
             {
                 Debug.WriteLine(" - Ignored: Not AccountingRequest type.");
                 return null;
@@ -119,11 +136,11 @@ namespace Lithnet.Pan.RAProxy
 
             // Send a response acknowledgement
             byte[] responsePacket = new byte[20];
-            responsePacket[0] = (byte)5;                      // Type code is 5 for response
+            responsePacket[0] = 5;                      // Type code is 5 for response
             responsePacket[1] = requestIdentifier;            // Identifier is the same as sent in request
             short responseLength = 20;                        // Length of response message is 2 bytes
 
-            responsePacket[3] = (byte)(responseLength & 0xff); ;
+            responsePacket[3] = (byte)(responseLength & 0xff);
             responsePacket[2] = (byte)((responseLength >> 8) & 0xff);
 
             // Use the request authenticator initially to authenticate the response

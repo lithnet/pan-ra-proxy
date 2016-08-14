@@ -45,7 +45,7 @@ namespace Lithnet.Pan.RAProxy
                 int attributeType = Convert.ToUInt16(rawAttributeBlock[0]);
                 int attributeLength = Convert.ToUInt16(rawAttributeBlock[1]);
                 byte[] attributeValue = new byte[attributeLength - 2];
-                if (attributeLength > 2 && attributeLength < rawAttributeBlock.Length)
+                if (attributeLength > 2 && attributeLength <= rawAttributeBlock.Length)
                 {
                     Array.Copy(rawAttributeBlock, 2, attributeValue, 0, attributeLength - 2);
                 }
