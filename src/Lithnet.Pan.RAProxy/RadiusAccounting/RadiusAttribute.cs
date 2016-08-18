@@ -93,7 +93,7 @@ namespace Lithnet.Pan.RAProxy
                     {
                         case RadiusAttributeValueDatatype.ByteArray:
                             newAttribute.Value = value;
-                            newAttribute.ValueAsString = Encoding.ASCII.GetString(value);
+                            newAttribute.ValueAsString = Convert.ToBase64String(value);
                             break;
                         case RadiusAttributeValueDatatype.String:
                         case RadiusAttributeValueDatatype.EncryptedString:
