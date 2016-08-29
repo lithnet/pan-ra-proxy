@@ -4,7 +4,7 @@
   <Product Id="*"
            Name="Lithnet RADIUS Accounting Proxy for Palo Alto Firewall"
            Language="1033"
-           Version="1.0.6066"
+           Version="1.0.6085"
            Manufacturer="Lithnet"
            UpgradeCode="62b975ca3c9f4a4299c34d96834fded9">
     <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" Platform="x64" />
