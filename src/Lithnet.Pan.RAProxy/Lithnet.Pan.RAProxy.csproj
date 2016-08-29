@@ -56,7 +56,6 @@
     <Compile Include="Extensions.cs" />
     <Compile Include="Exceptions\PanApiException.cs" />
     <Compile Include="Logging.cs" />
-    <Compile Include="PanApi\ApiInterface.cs" />
     <Compile Include="RadiusAccounting\AccountingListener.cs" />
     <Compile Include="PanApi\Entry.cs" />
     <Compile Include="PanApi\Logout.cs" />

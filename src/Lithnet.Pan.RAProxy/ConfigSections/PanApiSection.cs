@@ -9,20 +9,17 @@ namespace Lithnet.Pan.RAProxy
 {
     public class PanApiSection : ConfigurationElement
     {
-        private Uri uri;
-
         [ConfigurationProperty("url", IsRequired = true)]
         public Uri ApiUri
         {
             get
             {
-                return (Uri)this["url"];
+                return (Uri) this["url"];
             }
 
             set
             {
                 this["url"] = value;
-                
             }
         }
 
@@ -31,7 +28,7 @@ namespace Lithnet.Pan.RAProxy
         {
             get
             {
-                return (string)this["api-key"];
+                return (string) this["api-key"];
             }
 
             set
@@ -46,7 +43,7 @@ namespace Lithnet.Pan.RAProxy
         {
             get
             {
-                return (bool)this["disable-certificate-validation"];
+                return (bool) this["disable-certificate-validation"];
             }
 
             set

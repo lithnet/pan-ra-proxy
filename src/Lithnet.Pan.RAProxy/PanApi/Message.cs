@@ -47,11 +47,26 @@ namespace Lithnet.Pan.RAProxy
                     {
                         return;
                     }
-                    else
+
+                    if (status.InnerText == "error")
                     {
-                        EventLog.WriteEntry(Program.EventSourceName, $"The API called failed with status {status.InnerText}\n{response}", EventLogEntryType.Error, Logging.EventIDApiException);
-                        throw new PanApiException($"The API called failed with status {status.InnerText}", response);
+                        XmlNode message = d.SelectSingleNode("/response/msg/line/uid-response/payload/logout/entry/@message");
+
+                        if (message != null)
+                        {
+                            if (message.InnerText.Equals("delete mapping failed", StringComparison.InvariantCultureIgnoreCase))
+                            {
+                                if (!Config.DebuggingEnabled)
+                                {
+                                    return;
+                                }
+                            }
+                        }
                     }
+
+                    EventLog.WriteEntry(Program.EventSourceName, $"The API called failed with status {status.InnerText}\n{response}", EventLogEntryType.Error, Logging.EventIDApiException);
+                    throw new PanApiException($"The API called failed with status {status.InnerText}", response);
+
                 }
                 else
                 {
@@ -65,6 +80,23 @@ namespace Lithnet.Pan.RAProxy
                 throw new PanApiException($"The API called failed with an unsupported response", response);
             }
         }
+
+        /*\
+         
+             <response status="error">
+                 <msg>
+                  <line>
+                    <uid-response>
+                        <version>2.0</version>
+                        <payload>
+                            <logout>
+                               <entry name="fim-dev5\acollins" ip="49.127.66.17" message="Delete mapping failed"/>
+                            </logout>
+                        </payload>
+                    </uid-response>
+</line></msg></response>
+
+ */
 
         private string Submit()
         {
