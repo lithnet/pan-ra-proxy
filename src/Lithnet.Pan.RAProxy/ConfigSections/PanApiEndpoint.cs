@@ -1,13 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Configuration;
 
 namespace Lithnet.Pan.RAProxy
 {
-    public class PanApiSection : ConfigurationElement
+    public class PanApiEndpoint : ConfigurationElement
     {
         [ConfigurationProperty("url", IsRequired = true)]
         public Uri ApiUri
@@ -34,21 +30,6 @@ namespace Lithnet.Pan.RAProxy
             set
             {
                 this["api-key"] = value;
-            }
-        }
-
-
-        [ConfigurationProperty("disable-certificate-validation", IsRequired = false, DefaultValue = false)]
-        public bool DisableCertificateValidation
-        {
-            get
-            {
-                return (bool) this["disable-certificate-validation"];
-            }
-
-            set
-            {
-                this["disable-certificate-validation"] = value;
             }
         }
     }

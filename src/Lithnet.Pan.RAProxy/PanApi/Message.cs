@@ -1,17 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.IO;
 using System.Net;
 using System.Collections.Specialized;
 using System.Web;
-using System.Net.Http;
-using System.Security.Cryptography.X509Certificates;
-using System.Configuration;
 using System.Diagnostics;
-using System.Net.Http.Headers;
+using System.Net.Sockets;
 using System.Xml;
 
 namespace Lithnet.Pan.RAProxy
@@ -19,6 +13,8 @@ namespace Lithnet.Pan.RAProxy
     public abstract class Message
     {
         public abstract string ApiType { get; }
+
+        private int retryAttempts = 0;
 
         public void Send()
         {
@@ -100,12 +96,36 @@ namespace Lithnet.Pan.RAProxy
 
         private string Submit()
         {
+            PanApiEndpoint ep = Config.ActiveEndPoint;
+
+            try
+            {
+                return this.Submit(ep);
+            }
+            catch (SocketException ex)
+            {
+                this.retryAttempts++;
+
+                if (this.retryAttempts >= Config.ApiEndpoints.Count)
+                {
+                    throw;
+                }
+
+                EventLog.WriteEntry(Program.EventSourceName, $"The attempt to send the update to endpoint {ep.ApiUri} failed with a communciations error\n{ex.Message}\n{ex.Source}\nThe service will attempt to fail over to the next endpoint", EventLogEntryType.Warning, Logging.EventIDApiEndpointExceptionWillFailover);
+                Config.Failover();
+                return this.Submit();
+            }
+        }
+
+        private string Submit(PanApiEndpoint ep)
+        {
             string messageText = this.SerializeObject();
-            UriBuilder builder = new UriBuilder(Config.BaseUri);
+
+            UriBuilder builder = new UriBuilder(ep.ApiUri);
 
             NameValueCollection queryString = HttpUtility.ParseQueryString(string.Empty);
 
-            queryString["key"] = HttpUtility.UrlEncode(Config.ApiKey);
+            queryString["key"] = HttpUtility.UrlEncode(ep.ApiKey);
             queryString["type"] = this.ApiType;
 
             builder.Query = queryString.ToString();

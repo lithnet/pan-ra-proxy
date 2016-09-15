@@ -12,13 +12,59 @@ namespace Lithnet.Pan.RAProxy
 
     internal static class Config
     {
+        private static IList<PanApiEndpoint> apiEndpoints;
+
+        private static IEnumerator<PanApiEndpoint> activeEndpointEnumerator;
+
         private static RAProxyConfigurationSection section = ConfigurationManager.GetSection(RAProxyConfigurationSection.SectionName) as RAProxyConfigurationSection;
 
         private static Dictionary<string, string> cachedSecrets = new Dictionary<string, string>();
 
-        public static Uri BaseUri => Config.section.PanApi.ApiUri;
+        public static IList<PanApiEndpoint> ApiEndpoints
+        {
+            get
+            {
+                if (Config.apiEndpoints == null)
+                {
+                    Config.apiEndpoints = Config.section.PanApi.OfType<PanApiEndpoint>().ToList();
+                }
 
-        public static string ApiKey => Config.section.PanApi.ApiKey;
+                return Config.apiEndpoints;
+            }
+        }
+
+        public static bool CanFailover => Config.ApiEndpoints.Count > 1;
+
+        public static PanApiEndpoint ActiveEndPoint
+        {
+            get
+            {
+                if (Config.activeEndpointEnumerator == null)
+                {
+                    Config.activeEndpointEnumerator = Config.ApiEndpoints.GetEnumerator();
+                    Config.activeEndpointEnumerator.MoveNext();
+                }
+
+                if (Config.activeEndpointEnumerator.Current == null)
+                {
+                    Config.activeEndpointEnumerator.Reset();
+                    Config.activeEndpointEnumerator.MoveNext();
+                }
+
+                return Config.activeEndpointEnumerator.Current;
+            }
+        }
+
+        public static void Failover()
+        {
+            if (!Config.activeEndpointEnumerator.MoveNext())
+            {
+                Config.activeEndpointEnumerator.Reset();
+                Config.activeEndpointEnumerator.MoveNext();
+            }
+
+            EventLog.WriteEntry(Program.EventSourceName, $"Failed over to API endpoint {Config.ActiveEndPoint.ApiUri}\n", EventLogEntryType.Warning, Logging.EventIDApiEndpointFailover);
+        }
 
         public static bool DisableCertificateValidation => Config.section.PanApi.DisableCertificateValidation;
 

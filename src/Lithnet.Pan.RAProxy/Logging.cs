@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Lithnet.Pan.RAProxy
+﻿namespace Lithnet.Pan.RAProxy
 {
     internal class Logging
     {
@@ -16,6 +10,9 @@ namespace Lithnet.Pan.RAProxy
         public const int EventIDUnknownApiException = 3002;
         public const int EventIDUnknownApiResponse= 3003;
         public const int EventIDMessageSendException = 3004;
+        public const int EventIDApiEndpointExceptionWillFailover = 3005;
+        public const int EventIDApiEndpointFailover = 3006;
+
 
         // Accounting Errors
         public const int EventIDUnknownRadiusHost = 3101;

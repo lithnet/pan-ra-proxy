@@ -46,7 +46,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ConfigSections\PanApiSection.cs" />
+    <Compile Include="ConfigSections\PanApiEndpoint.cs" />
+    <Compile Include="ConfigSections\PanApiCollection.cs" />
     <Compile Include="ConfigSections\RadiusServerCollection.cs" />
     <Compile Include="ConfigSections\RadiusClientSection.cs" />
     <Compile Include="ConfigSections\RadiusServerSection.cs" />

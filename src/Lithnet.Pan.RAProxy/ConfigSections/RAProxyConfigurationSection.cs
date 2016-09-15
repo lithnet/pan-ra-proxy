@@ -53,17 +53,17 @@ namespace Lithnet.Pan.RAProxy
             }
         }
 
-        [ConfigurationProperty("pan-api")]
-        public PanApiSection PanApi
+        [ConfigurationProperty("pan-api-endpoints")]
+        public PanApiCollection PanApi
         {
             get
             {
-                return (PanApiSection)this["pan-api"];
+                return (PanApiCollection)this["pan-api-endpoints"];
             }
 
             set
             {
-                this["pan-api"] = value;
+                this["pan-api-endpoints"] = value;
             }
         }
     }
