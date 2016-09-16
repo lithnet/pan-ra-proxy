@@ -102,7 +102,7 @@ namespace Lithnet.Pan.RAProxy
             {
                 return this.Submit(ep);
             }
-            catch (SocketException ex)
+            catch (Exception ex)
             {
                 this.retryAttempts++;
 
