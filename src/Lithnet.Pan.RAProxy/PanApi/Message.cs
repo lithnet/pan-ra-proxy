@@ -26,7 +26,7 @@ namespace Lithnet.Pan.RAProxy
             }
             catch (Exception ex)
             {
-                EventLog.WriteEntry(Program.EventSourceName, $"The attempt to send the update failed\n{ex.Message}\n{ex.Source}\n", EventLogEntryType.Error, Logging.EventIDMessageSendException);
+                Logging.WriteEntry($"The attempt to send the update failed\n{ex.Message}\n{ex.Source}\n", EventLogEntryType.Error, Logging.EventIDMessageSendException);
                 throw;
             }
 
@@ -60,19 +60,19 @@ namespace Lithnet.Pan.RAProxy
                         }
                     }
 
-                    EventLog.WriteEntry(Program.EventSourceName, $"The API called failed with status {status.InnerText}\n{response}", EventLogEntryType.Error, Logging.EventIDApiException);
+                    Logging.WriteEntry($"The API called failed with status {status.InnerText}\n{response}", EventLogEntryType.Error, Logging.EventIDApiException);
                     throw new PanApiException($"The API called failed with status {status.InnerText}", response);
 
                 }
                 else
                 {
-                    EventLog.WriteEntry(Program.EventSourceName, $"The API called failed with an unknown result\n{response}", EventLogEntryType.Error, Logging.EventIDUnknownApiException);
+                    Logging.WriteEntry($"The API called failed with an unknown result\n{response}", EventLogEntryType.Error, Logging.EventIDUnknownApiException);
                     throw new PanApiException($"The API called failed with an unknown result", response);
                 }
             }
             catch
             {
-                EventLog.WriteEntry(Program.EventSourceName, $"The API called failed with an unsupported response\n{response}", EventLogEntryType.Error, Logging.EventIDUnknownApiResponse);
+                Logging.WriteEntry($"The API called failed with an unsupported response\n{response}", EventLogEntryType.Error, Logging.EventIDUnknownApiResponse);
                 throw new PanApiException($"The API called failed with an unsupported response", response);
             }
         }
@@ -111,7 +111,7 @@ namespace Lithnet.Pan.RAProxy
                     throw;
                 }
 
-                EventLog.WriteEntry(Program.EventSourceName, $"The attempt to send the update to endpoint {ep.ApiUri} failed with a communciations error\n{ex.Message}\n{ex.Source}\nThe service will attempt to fail over to the next endpoint", EventLogEntryType.Warning, Logging.EventIDApiEndpointExceptionWillFailover);
+                Logging.WriteEntry($"The attempt to send the update to endpoint {ep.ApiUri} failed with a communciations error\n{ex.Message}\n{ex.Source}\nThe service will attempt to fail over to the next endpoint", EventLogEntryType.Warning, Logging.EventIDApiEndpointExceptionWillFailover);
                 Config.Failover();
                 return this.Submit();
             }

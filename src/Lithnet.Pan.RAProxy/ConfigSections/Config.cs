@@ -63,7 +63,7 @@ namespace Lithnet.Pan.RAProxy
                 Config.activeEndpointEnumerator.MoveNext();
             }
 
-            EventLog.WriteEntry(Program.EventSourceName, $"Failed over to API endpoint {Config.ActiveEndPoint.ApiUri}\n", EventLogEntryType.Warning, Logging.EventIDApiEndpointFailover);
+            Logging.WriteEntry($"Failed over to API endpoint {Config.ActiveEndPoint.ApiUri}\n", EventLogEntryType.Warning, Logging.EventIDApiEndpointFailover);
         }
 
         public static bool DisableCertificateValidation => Config.section.PanApi.DisableCertificateValidation;
@@ -90,7 +90,7 @@ namespace Lithnet.Pan.RAProxy
                 }
             }
 
-            EventLog.WriteEntry(Program.EventSourceName, $"A RADIUS message was received from an unknown source {address} and was discarded", EventLogEntryType.Error, Logging.EventIDUnknownRadiusHost);
+            Logging.WriteEntry($"A RADIUS message was received from an unknown source {address} and was discarded", EventLogEntryType.Error, Logging.EventIDUnknownRadiusHost);
 
             return null;
         }

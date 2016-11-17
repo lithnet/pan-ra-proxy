@@ -16,18 +16,20 @@ namespace Lithnet.Pan.RAProxy
         public object Value { get; set; }
 
         // Native datatypes for value
-        public String ValueAsString { get; set; }
+        public string ValueAsString { get; set; }
+
         public uint ValueAsInt { get; set; }
+
         public byte[] ValueAsByteArray { get; set; }
+
         public IPAddress ValueAsIPAddress { get; set; }
-
-
+        
         /// <summary>
         /// Default constructor
         /// </summary>
         private RadiusAttribute()
         {
-            
+
         }
 
         /// <summary>
@@ -41,7 +43,8 @@ namespace Lithnet.Pan.RAProxy
             if (rawAttributeBlock.Length < 2)
                 throw new InvalidRadiusAttributeException($"Invalid attribute block size. Expected 2 or more bytes, actual was {rawAttributeBlock.Length}.");
 
-            try {
+            try
+            {
                 int attributeType = Convert.ToUInt16(rawAttributeBlock[0]);
                 int attributeLength = Convert.ToUInt16(rawAttributeBlock[1]);
                 byte[] attributeValue = new byte[attributeLength - 2];
@@ -60,12 +63,12 @@ namespace Lithnet.Pan.RAProxy
             {
                 throw new InvalidRadiusAttributeException($"Invalid attribute block content: {e.Message}");
             }
-            
+
         }
 
-        public override String ToString()
+        public override string ToString()
         {
-            return GetAttributeTypeString(Type) + ": " + ValueAsString;
+            return GetAttributeTypeString(this.Type) + ": " + this.ValueAsString;
         }
 
         /// <summary>
@@ -98,7 +101,7 @@ namespace Lithnet.Pan.RAProxy
                         case RadiusAttributeValueDatatype.String:
                         case RadiusAttributeValueDatatype.EncryptedString:
                             newAttribute.Value = Encoding.ASCII.GetString(value);
-                            newAttribute.ValueAsString = (String)newAttribute.Value;
+                            newAttribute.ValueAsString = (string)newAttribute.Value;
                             break;
                         case RadiusAttributeValueDatatype.Integer:
                             Array.Reverse(value);
@@ -141,11 +144,11 @@ namespace Lithnet.Pan.RAProxy
             while (byteIndex + 2 <= rawAttributeMessage.Length)
             {
                 attributeType = Convert.ToUInt16(rawAttributeMessage[byteIndex]);
-                attributeLength = Convert.ToUInt16(rawAttributeMessage[byteIndex+1]);
+                attributeLength = Convert.ToUInt16(rawAttributeMessage[byteIndex + 1]);
                 if (attributeLength > 2 && attributeLength + byteIndex <= rawAttributeMessage.Length)
                 {
                     attributeBytes = new byte[attributeLength - 2];
-                    Array.Copy(rawAttributeMessage, byteIndex+2, attributeBytes, 0, attributeLength - 2);
+                    Array.Copy(rawAttributeMessage, byteIndex + 2, attributeBytes, 0, attributeLength - 2);
                     byteIndex += attributeLength;
                 }
                 else
@@ -166,14 +169,16 @@ namespace Lithnet.Pan.RAProxy
         /// if this attribute is found in the accounting request packet.
         /// </summary>
         /// <returns>True if this attribute triggers a response</returns>
-        public bool ResponseRequired()
+        public bool IsRequiredInResponse()
         {
-            switch (Type)
+            switch (this.Type)
             {
                 case RadiusAttributeType.ProxyState:
                     return true;
+
+                default:
+                    return false;
             }
-            return false;
         }
 
         /// <summary>
@@ -183,23 +188,25 @@ namespace Lithnet.Pan.RAProxy
         /// <returns>Byte array to be included in the response</returns>
         public byte[] GetResponse()
         {
-            switch (Type)
+            switch (this.Type)
             {
                 // ProxyState needs to be added to the response unmodified
                 case RadiusAttributeType.ProxyState:
-                    byte[] responseData = new byte[ValueAsByteArray.Length + 2];
+                    byte[] responseData = new byte[this.ValueAsByteArray.Length + 2];
                     // Add the type code
-                    responseData[0] = (byte) Type;
+                    responseData[0] = (byte)this.Type;
 
                     // Add the length of the attribute (value + type + length)
-                    responseData[1] = (byte) (ValueAsByteArray.Length + 2);
+                    responseData[1] = (byte)(this.ValueAsByteArray.Length + 2);
 
                     // Add the data
-                    Array.Copy(ValueAsByteArray,0,responseData,2,ValueAsByteArray.Length);
+                    Array.Copy(this.ValueAsByteArray, 0, responseData, 2, this.ValueAsByteArray.Length);
 
                     return responseData;
+
+                default:
+                    return null;
             }
-            return null;
         }
 
         /// <summary>
@@ -209,7 +216,8 @@ namespace Lithnet.Pan.RAProxy
         /// <returns>Datatype expected</returns>
         private static RadiusAttributeValueDatatype GetAttributeValueDatatype(RadiusAttributeType type)
         {
-            switch (type) {
+            switch (type)
+            {
                 case RadiusAttributeType.UserName:
                     return RadiusAttributeValueDatatype.String;
                 case RadiusAttributeType.UserPassword:
@@ -447,14 +455,14 @@ namespace Lithnet.Pan.RAProxy
             IP,
             EncryptedString
         }
-        
+
         /// <summary>
         /// Type codes known to be sent via RADIUS attributes
         /// </summary>
         public enum RadiusAttributeType
         {
             UserName = 1,
-            UserPassword = 2, 
+            UserPassword = 2,
             CHAPPassword = 3,
             NASIPAddress = 4,
             NASPort = 5,

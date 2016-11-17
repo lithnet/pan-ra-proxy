@@ -33,44 +33,78 @@ namespace Lithnet.Pan.RAProxy
 
         public void Start(CancellationToken token)
         {
-            Debug.WriteLine($"RADIUS accounting server listening on port {this.Port}.");
-            Task.Run(async () =>
+            Trace.WriteLine($"RADIUS accounting server listening on port {this.Port}.");
+            Task t = new Task((async () =>
             {
                 using (UdpClient listener = new UdpClient(this.Port))
                 {
                     while (!token.IsCancellationRequested)
                     {
-                        var receiveResult = await listener.ReceiveAsync();
-                        Debug.WriteLine($"Received packet from {receiveResult.RemoteEndPoint.Address}:{receiveResult.RemoteEndPoint.Port}");
-
-                        // If this is a valid sized RADIUS packet, try to parse, otherwise silently ignore
-                        if (receiveResult.Buffer?.Length >= 20)
+                        try
                         {
-                            byte[] response = ParseRequestMessage(receiveResult.Buffer, receiveResult.RemoteEndPoint.Address);
+                            var receiveResult = await listener.ReceiveAsync();
+                            Trace.WriteLine($"Received packet from {receiveResult.RemoteEndPoint.Address}:{receiveResult.RemoteEndPoint.Port}");
 
-                            if (response?.Length > 0)
+                            // If this is a valid sized RADIUS packet, try to parse, otherwise silently ignore
+                            if (receiveResult.Buffer?.Length >= 20)
                             {
-                                listener.Send(response, response.Length, receiveResult.RemoteEndPoint);
-                                Debug.WriteLine($"Sent accounting response to {receiveResult.RemoteEndPoint.Address}:{receiveResult.RemoteEndPoint.Port}");
+                                byte[] response = ParseRequestMessage(receiveResult.Buffer, receiveResult.RemoteEndPoint.Address);
+
+                                if (response?.Length > 0)
+                                {
+                                    listener.Send(response, response.Length, receiveResult.RemoteEndPoint);
+                                    Trace.WriteLine($"Sent accounting response to {receiveResult.RemoteEndPoint.Address}:{receiveResult.RemoteEndPoint.Port}");
+                                }
+                                else
+                                {
+                                    Trace.WriteLine($"Not sending an accounting response to {receiveResult.RemoteEndPoint.Address}:{receiveResult.RemoteEndPoint.Port}");
+                                }
                             }
                             else
                             {
-                                Debug.WriteLine($"Not sending an accounting response to {receiveResult.RemoteEndPoint.Address}:{receiveResult.RemoteEndPoint.Port}");
+                                Trace.WriteLine("Invalid accounting request received");
                             }
                         }
-                        else
+                        catch (SocketException x)
                         {
-                            Debug.WriteLine("Invalid accounting request received");
+                            switch (x.SocketErrorCode)
+                            {
+                                case SocketError.Interrupted:
+                                case SocketError.AccessDenied:
+                                case SocketError.Fault:
+                                case SocketError.NetworkDown:
+                                case SocketError.NetworkUnreachable:
+                                case SocketError.NetworkReset:
+                                case SocketError.ConnectionAborted:
+                                case SocketError.ConnectionReset:
+                                case SocketError.TimedOut:
+                                case SocketError.ConnectionRefused:
+                                case SocketError.HostDown:
+                                case SocketError.HostUnreachable:
+                                case SocketError.Disconnecting:
+                                case SocketError.HostNotFound:
+                                case SocketError.TryAgain:
+                                case SocketError.NoData:
+                                case SocketError.OperationAborted:
+                                    Trace.WriteLine($"Socket error, resetting:{x.Message}");
+                                    Thread.Sleep(100);
+                                    break;
+
+                                default:
+                                    Trace.WriteLine($"Socket error, re-throwing:{x.Message}");
+                                    throw;
+                            }
                         }
                     }
                 }
-            }, token);
+            }), token);
 
+            t.Start();
         }
 
         public void Stop()
         {
-            Debug.WriteLine($"RADIUS accounting server shutdown.");
+            Trace.WriteLine($"RADIUS accounting server shutdown.");
         }
 
         /// <summary>
@@ -84,22 +118,22 @@ namespace Lithnet.Pan.RAProxy
         /// <returns>Acknowledgement response data, if successfully parsed</returns>
         private static byte[] ParseRequestMessage(byte[] data, IPAddress sender)
         {
-            byte requestType = data[0];                         // Type code is first 8 bits, 4 = AccountingRequest, 5 = AccountingResponse
-            byte requestIdentifier = data[1];                   // Identifier is next 8 bits, representing sequence of message
-            int requestLength = (data[2] << 8) | data[3];       // Length is next 16 bits, representing packet length
+            byte requestType = data[0]; // Type code is first 8 bits, 4 = AccountingRequest, 5 = AccountingResponse
+            byte requestIdentifier = data[1]; // Identifier is next 8 bits, representing sequence of message
+            int requestLength = (data[2] << 8) | data[3]; // Length is next 16 bits, representing packet length
 
             // Determine if the packet contains Accounting-Request type code (4), otherwise do nothing
             if (requestType != 4)
             {
-                Debug.WriteLine(" - Ignored: Not AccountingRequest type.");
+                Trace.WriteLine(" - Ignored: Not AccountingRequest type.");
                 return null;
             }
-            Debug.WriteLine($" - AccountingRequest #{requestIdentifier} with length {requestLength}.");
+            Trace.WriteLine($" - AccountingRequest #{requestIdentifier} with length {requestLength}.");
 
             // Check the authenticator token matches the shared secret, otherwise do nothing
             if (!AuthenticateRequest(data, sender))
             {
-                Debug.WriteLine(" - Ignored: Invalid Authenticator Token.");
+                Trace.WriteLine(" - Ignored: Invalid Authenticator Token.");
                 return null;
             }
 
@@ -110,9 +144,9 @@ namespace Lithnet.Pan.RAProxy
             List<byte> responseAttributes = new List<byte>();
             foreach (var item in attributes)
             {
-                Debug.WriteLine($" | " + item.ToString());
+                Trace.WriteLine($" | " + item.ToString());
 
-                if (item.ResponseRequired())
+                if (item.IsRequiredInResponse())
                     responseAttributes.AddRange(item.GetResponse());
             }
 
@@ -123,10 +157,10 @@ namespace Lithnet.Pan.RAProxy
             byte[] responsePacket = new byte[responseAttributes.Count + 20];
 
             // First populate any attributes into the response, since their length is known
-            responsePacket[0] = 5;                            // Type code is 5 for response
-            responsePacket[1] = requestIdentifier;            // Identifier is the same as sent in request
+            responsePacket[0] = 5; // Type code is 5 for response
+            responsePacket[1] = requestIdentifier; // Identifier is the same as sent in request
 
-            short responseLength = (short)responsePacket.Length;     // Length of response message is at minimum 20
+            short responseLength = (short)responsePacket.Length; // Length of response message is at minimum 20
 
             responsePacket[3] = (byte)(responseLength & 0xff);
             responsePacket[2] = (byte)((responseLength >> 8) & 0xff);

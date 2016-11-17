@@ -26,7 +26,7 @@
 
       </Component>
 
-      <Component Id="cmpb69520521cbba41ac82adecb1ef714866" Guid="*" Win64="yes">
+      <Component Id="cmpb69520521cbba41ac82adecb1ef714866" Guid="*" NeverOverwrite="yes" Win64="yes">
         <File Id="App.config" KeyPath="yes" Source="$(var.Lithnet.Pan.RAProxy.TargetDir)Lithnet.Pan.RAProxy.exe.config" />
       </Component>
 

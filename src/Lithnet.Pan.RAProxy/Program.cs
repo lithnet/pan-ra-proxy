@@ -43,14 +43,13 @@ namespace Lithnet.Pan.RAProxy
             else
             {
                 Start();
-                System.Threading.Thread.Sleep(System.Threading.Timeout.Infinite);
+                Thread.Sleep(Timeout.Infinite);
             }
         }
 
         internal static void Start()
         {
             Program.cancellationToken = new CancellationTokenSource();
-
 
             if (!EventLog.SourceExists(Program.EventSourceName))
             {
@@ -59,8 +58,8 @@ namespace Lithnet.Pan.RAProxy
 
             if (Config.DisableCertificateValidation)
             {
-                System.Net.ServicePointManager.ServerCertificateValidationCallback += (sender, certificate, chain, errors) => true;
-                EventLog.WriteEntry(Program.EventSourceName, "Server certificate validation has been disabled. The SSL certificate on the Palo Alto device will not be validated", EventLogEntryType.Warning, Logging.EventIDServerCertificateValidationDisabled);
+                ServicePointManager.ServerCertificateValidationCallback += (sender, certificate, chain, errors) => true;
+                Logging.WriteEntry("Server certificate validation has been disabled. The SSL certificate on the Palo Alto device will not be validated", EventLogEntryType.Warning, Logging.EventIDServerCertificateValidationDisabled);
             }
 
             Program.StartQueue();
@@ -96,24 +95,17 @@ namespace Lithnet.Pan.RAProxy
                     {
                         try
                         {
-
-                            if (Config.DebuggingEnabled)
-                            {
-                                EventLog.WriteEntry(Program.EventSourceName, $"Incoming accounting request received\n{request}", EventLogEntryType.Information, Logging.EventIDAccountingRequestRecieved);
-                            }
+                            Logging.WriteDebugEntry($"Incoming accounting request received\n{request}", EventLogEntryType.Information, Logging.EventIDAccountingRequestRecieved);
 
                             Program.SendMessage(request);
                         }
                         catch (MissingValueException ex)
                         {
-                            if (Config.DebuggingEnabled)
-                            {
-                                EventLog.WriteEntry(Program.EventSourceName, $"A radius accounting packet was discarded because it had incomplete information.\n{ex.Message}", EventLogEntryType.Warning, Logging.EventIDMessageSendFailure);
-                            }
+                            Logging.WriteDebugEntry($"A radius accounting packet was discarded because it had incomplete information.\n{ex.Message}", EventLogEntryType.Warning, Logging.EventIDMessageSendFailure);
                         }
                         catch (Exception ex)
                         {
-                            EventLog.WriteEntry(Program.EventSourceName, $"An error occured while submitting the user-id update\n{ex.Message}\n{ex.StackTrace}", EventLogEntryType.Error, Logging.EventIDMessageSendFailure);
+                            Logging.WriteEntry($"An error occured while submitting the user-id update\n{ex.Message}\n{ex.StackTrace}", EventLogEntryType.Error, Logging.EventIDMessageSendFailure);
                         }
                     }
                 }
@@ -184,16 +176,16 @@ namespace Lithnet.Pan.RAProxy
             try
             {
                 message.Send();
-                EventLog.WriteEntry(Program.EventSourceName, $"UserID API mapping succeeded\nUsername: {username.ValueAsString}\nIP address: {framedIP.ValueAsString}\nType: {type}", EventLogEntryType.Information, Logging.EventIDUserIDUpdateComplete);
+                Logging.WriteEntry($"UserID API mapping succeeded\nUsername: {username.ValueAsString}\nIP address: {framedIP.ValueAsString}\nType: {type}", EventLogEntryType.Information, Logging.EventIDUserIDUpdateComplete);
 
             }
             catch (PanApiException ex)
             {
-                EventLog.WriteEntry(Program.EventSourceName, $"The UserID API called failed\nUsername: {username.ValueAsString}\nIP address: {framedIP.ValueAsString}\n{ex.Message}\n{ex.StackTrace}\n{ex.Detail}", EventLogEntryType.Error, Logging.EventIDMessageSendFailure);
+                Logging.WriteEntry($"The UserID API called failed\nUsername: {username.ValueAsString}\nIP address: {framedIP.ValueAsString}\n{ex.Message}\n{ex.StackTrace}\n{ex.Detail}", EventLogEntryType.Error, Logging.EventIDMessageSendFailure);
             }
             catch (Exception ex)
             {
-                EventLog.WriteEntry(Program.EventSourceName, $"An error occured while submitting the user-id update\nUsername: {username.ValueAsString}\nIP address: {framedIP.ValueAsString}\n{ex.Message}\n{ex.StackTrace}", EventLogEntryType.Error, Logging.EventIDMessageSendFailure);
+                Logging.WriteEntry($"An error occured while submitting the user-id update\nUsername: {username.ValueAsString}\nIP address: {framedIP.ValueAsString}\n{ex.Message}\n{ex.StackTrace}", EventLogEntryType.Error, Logging.EventIDMessageSendFailure);
             }
         }
     }
