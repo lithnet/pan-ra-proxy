@@ -105,25 +105,39 @@ namespace Lithnet.Pan.RAProxy
 
             // We're all good, store the attributes.
             List<RadiusAttribute> attributes = RadiusAttribute.ParseAttributeMessage(data, 20);
+
+            // Determine what we need to reply with, and output some debug information
+            List<byte> responseAttributes = new List<byte>();
             foreach (var item in attributes)
             {
                 Debug.WriteLine($" | " + item.ToString());
+
+                if (item.ResponseRequired())
+                    responseAttributes.AddRange(item.GetResponse());
             }
 
             // Send the attributes array on to the necessary interface
             Program.AddToQueue(new AccountingRequest(sender, attributes));
 
             // Send a response acknowledgement
-            byte[] responsePacket = new byte[20];
-            responsePacket[0] = 5;                      // Type code is 5 for response
+            byte[] responsePacket = new byte[responseAttributes.Count + 20];
+
+            // First populate any attributes into the response, since their length is known
+            responsePacket[0] = 5;                            // Type code is 5 for response
             responsePacket[1] = requestIdentifier;            // Identifier is the same as sent in request
-            short responseLength = 20;                        // Length of response message is 2 bytes
+
+            short responseLength = (short)responsePacket.Length;     // Length of response message is at minimum 20
 
             responsePacket[3] = (byte)(responseLength & 0xff);
             responsePacket[2] = (byte)((responseLength >> 8) & 0xff);
 
             // Use the request authenticator initially to authenticate the response
             Array.Copy(data, 4, responsePacket, 4, 16);
+
+            // Add any response attributes
+            Array.Copy(responseAttributes.ToArray(), 0, responsePacket, 20, responseLength);
+
+            // Authenticate the response
             AuthenticateResponse(responsePacket, sender);
 
             return responsePacket;
