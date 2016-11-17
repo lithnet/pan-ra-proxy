@@ -135,7 +135,7 @@ namespace Lithnet.Pan.RAProxy
             Array.Copy(data, 4, responsePacket, 4, 16);
 
             // Add any response attributes
-            Array.Copy(responseAttributes.ToArray(), 0, responsePacket, 20, responseLength);
+            Array.Copy(responseAttributes.ToArray(), 0, responsePacket, 20, responseAttributes.Count);
 
             // Authenticate the response
             AuthenticateResponse(responsePacket, sender);
