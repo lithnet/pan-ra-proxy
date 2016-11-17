@@ -162,6 +162,47 @@ namespace Lithnet.Pan.RAProxy
         }
 
         /// <summary>
+        /// Indicates whether one or more attributes must be passed back in the accounting response
+        /// if this attribute is found in the accounting request packet.
+        /// </summary>
+        /// <returns>True if this attribute triggers a response</returns>
+        public bool ResponseRequired()
+        {
+            switch (Type)
+            {
+                case RadiusAttributeType.ProxyState:
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Returns any response attribute to be returned in an Accounting-Response packet
+        /// based on this attribute being received in the Accounting-Request
+        /// </summary>
+        /// <returns>Byte array to be included in the response</returns>
+        public byte[] GetResponse()
+        {
+            switch (Type)
+            {
+                // ProxyState needs to be added to the response unmodified
+                case RadiusAttributeType.ProxyState:
+                    byte[] responseData = new byte[ValueAsByteArray.Length + 2];
+                    // Add the type code
+                    responseData[0] = (byte) Type;
+
+                    // Add the length of the attribute (value + type + length)
+                    responseData[1] = (byte) (ValueAsByteArray.Length + 2);
+
+                    // Add the data
+                    Array.Copy(ValueAsByteArray,0,responseData,2,ValueAsByteArray.Length);
+
+                    return responseData;
+            }
+            return null;
+        }
+
+        /// <summary>
         /// Determine the datatype based on the given attribute type.
         /// </summary>
         /// <param name="type">Attribute type integer</param>
