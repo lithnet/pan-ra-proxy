@@ -16,7 +16,7 @@ namespace Lithnet.Pan.RAProxy
     {
 
         public int Port { get; set; }
-      
+
         public AccountingListener()
         {
             this.Port = 1813;
@@ -42,7 +42,7 @@ namespace Lithnet.Pan.RAProxy
                     {
                         var receiveResult = await listener.ReceiveAsync();
                         Debug.WriteLine($"Received packet from {receiveResult.RemoteEndPoint.Address}:{receiveResult.RemoteEndPoint.Port}");
-                        
+
                         // If this is a valid sized RADIUS packet, try to parse, otherwise silently ignore
                         if (receiveResult.Buffer?.Length >= 20)
                         {
@@ -50,29 +50,22 @@ namespace Lithnet.Pan.RAProxy
 
                             if (response?.Length > 0)
                             {
-                                Socket sendSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-                                sendSocket.SendTo(response, receiveResult.RemoteEndPoint);
+                                listener.Send(response, response.Length, receiveResult.RemoteEndPoint);
+                                Debug.WriteLine($"Sent accounting response to {receiveResult.RemoteEndPoint.Address}:{receiveResult.RemoteEndPoint.Port}");
                             }
+                            else
+                            {
+                                Debug.WriteLine($"Not sending an accounting response to {receiveResult.RemoteEndPoint.Address}:{receiveResult.RemoteEndPoint.Port}");
+                            }
+                        }
+                        else
+                        {
+                            Debug.WriteLine("Invalid accounting request received");
                         }
                     }
                 }
             }, token);
-            
-        }
 
-        /// <summary>
-        /// Event handler method to be fired when the socket receives a data packet.
-        /// </summary>
-        /// <param name="asyncResult">State variable passed from asynchronous receive</param>
-        private void ReceiveCallback(IAsyncResult asyncResult)
-        {
-            // UDP client
-            UdpClient listener = (UdpClient)asyncResult.AsyncState;
-
-            // End point
-            IPEndPoint sourceEP = new IPEndPoint(IPAddress.Any, this.Port);
-
-            
         }
 
         public void Stop()
@@ -114,7 +107,7 @@ namespace Lithnet.Pan.RAProxy
             List<RadiusAttribute> attributes = RadiusAttribute.ParseAttributeMessage(data, 20);
             foreach (var item in attributes)
             {
-                Debug.WriteLine($" | " +item.ToString());
+                Debug.WriteLine($" | " + item.ToString());
             }
 
             // Send the attributes array on to the necessary interface
@@ -146,7 +139,7 @@ namespace Lithnet.Pan.RAProxy
         private static bool AuthenticateRequest(byte[] data, IPAddress sender)
         {
             // Authenticator is 16 bit MD5 sum, starting at 5th byte
-            byte[] requestAuthenticator = new byte[16];         
+            byte[] requestAuthenticator = new byte[16];
             Array.Copy(data, 4, requestAuthenticator, 0, 16);
 
             // Use the sender's IP to obtain the shared secret
@@ -156,7 +149,7 @@ namespace Lithnet.Pan.RAProxy
 
             // To obtain the MD5 authentication hash, we need to blank out the authenticator bits with zeros
             byte[] secretBytes = Encoding.ASCII.GetBytes(secret);
-            byte[] hashableRequest = new byte[data.Length+secretBytes.Length];
+            byte[] hashableRequest = new byte[data.Length + secretBytes.Length];
             hashableRequest.Initialize();
             Array.Copy(data, 0, hashableRequest, 0, 4);
             Array.Copy(data, 20, hashableRequest, 20, data.Length - 20);
