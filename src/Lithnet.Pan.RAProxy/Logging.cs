@@ -27,6 +27,12 @@ namespace Lithnet.Pan.RAProxy
         public const int EventIDAccountingRequestRecieved = 4001;
         public const int EventIDUserIDUpdateComplete = 4002;
 
+        public static PerformanceCounter CounterReceivedPerSecond;
+
+        public static PerformanceCounter CounterSentPerSecond;
+
+        public static PerformanceCounter CounterItemsInQueue;
+        
         public static void WriteEntry(string message, EventLogEntryType type, int eventID)
         {
             Trace.WriteLine(message);
@@ -41,6 +47,35 @@ namespace Lithnet.Pan.RAProxy
             {
                 EventLog.WriteEntry(Program.EventSourceName, message, type, eventID);
             }
+        }
+
+
+
+        static Logging()
+        {
+            Logging.CounterReceivedPerSecond = new PerformanceCounter
+            {
+                CategoryName = "PANRAProxy",
+                CounterName = "Requests received / second",
+                MachineName = ".",
+                ReadOnly = false
+            };
+
+            Logging.CounterSentPerSecond = new PerformanceCounter
+            {
+                CategoryName = "PANRAProxy",
+                CounterName = "Requests sent / second",
+                MachineName = ".",
+                ReadOnly = false
+            };
+
+            Logging.CounterItemsInQueue = new PerformanceCounter
+            {
+                CategoryName = "PANRAProxy",
+                CounterName = "Requests in queue",
+                MachineName = ".",
+                ReadOnly = false
+            };
         }
     }
 }

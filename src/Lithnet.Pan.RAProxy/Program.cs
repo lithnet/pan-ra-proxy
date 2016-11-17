@@ -93,9 +93,12 @@ namespace Lithnet.Pan.RAProxy
                 {
                     foreach (AccountingRequest request in Program.incomingRequests.GetConsumingEnumerable(Program.cancellationToken.Token))
                     {
+                        Logging.CounterItemsInQueue.Decrement();
+
                         try
                         {
                             Logging.WriteDebugEntry($"Incoming accounting request received\n{request}", EventLogEntryType.Information, Logging.EventIDAccountingRequestRecieved);
+                            Trace.WriteLine($"Request queue lenth: {Program.incomingRequests.Count}");
 
                             Program.SendMessage(request);
                         }
@@ -121,6 +124,7 @@ namespace Lithnet.Pan.RAProxy
         internal static void AddToQueue(AccountingRequest request)
         {
             Program.incomingRequests.Add(request);
+            Logging.CounterItemsInQueue.Increment();
         }
 
         private static void SendMessage(AccountingRequest request)
@@ -175,9 +179,9 @@ namespace Lithnet.Pan.RAProxy
 
             try
             {
+                Logging.CounterSentPerSecond.Increment();
                 message.Send();
                 Logging.WriteEntry($"UserID API mapping succeeded\nUsername: {username.ValueAsString}\nIP address: {framedIP.ValueAsString}\nType: {type}", EventLogEntryType.Information, Logging.EventIDUserIDUpdateComplete);
-
             }
             catch (PanApiException ex)
             {

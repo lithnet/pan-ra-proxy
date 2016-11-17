@@ -23,7 +23,11 @@
                         Interactive="no">
         </ServiceInstall>
         <ServiceControl Id="ServiceControlEvents" Name="[SERVICE_NAME]" Start="install" Stop="both" Remove="uninstall" Wait="yes"/>
-
+        <util:PerformanceCategory Id="PerformanceCounter" Name="PANRAProxy" DefaultLanguage="english">
+          <util:PerformanceCounter Name="Requests in queue" Type="numberOfItems32"  Help="Shows the number of requests in the queue that are waiting to be sent to the firewall"/>
+          <util:PerformanceCounter Name="Requests received / second" Type="rateOfCountsPerSecond32" Help="Shows the number of account requests receieved per second"/>
+          <util:PerformanceCounter Name="Requests sent / second" Type="rateOfCountsPerSecond32" Help="Shows the number of account requests sent per second"/>
+        </util:PerformanceCategory>
       </Component>
 
       <Component Id="cmpb69520521cbba41ac82adecb1ef714866" Guid="*" NeverOverwrite="yes" Win64="yes">

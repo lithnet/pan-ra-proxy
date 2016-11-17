@@ -44,6 +44,7 @@ namespace Lithnet.Pan.RAProxy
                         {
                             var receiveResult = await listener.ReceiveAsync();
                             Trace.WriteLine($"Received packet from {receiveResult.RemoteEndPoint.Address}:{receiveResult.RemoteEndPoint.Port}");
+                            Logging.CounterReceivedPerSecond.Increment();
 
                             // If this is a valid sized RADIUS packet, try to parse, otherwise silently ignore
                             if (receiveResult.Buffer?.Length >= 20)
