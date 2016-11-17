@@ -16,7 +16,7 @@ namespace Lithnet.Pan.RAProxy
     {
 
         public int Port { get; set; }
-      
+
         public AccountingListener()
         {
             this.Port = 1813;
@@ -42,7 +42,7 @@ namespace Lithnet.Pan.RAProxy
                     {
                         var receiveResult = await listener.ReceiveAsync();
                         Debug.WriteLine($"Received packet from {receiveResult.RemoteEndPoint.Address}:{receiveResult.RemoteEndPoint.Port}");
-                        
+
                         // If this is a valid sized RADIUS packet, try to parse, otherwise silently ignore
                         if (receiveResult.Buffer?.Length >= 20)
                         {
@@ -50,29 +50,22 @@ namespace Lithnet.Pan.RAProxy
 
                             if (response?.Length > 0)
                             {
-                                Socket sendSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-                                sendSocket.SendTo(response, receiveResult.RemoteEndPoint);
+                                listener.Send(response, response.Length, receiveResult.RemoteEndPoint);
+                                Debug.WriteLine($"Sent accounting response to {receiveResult.RemoteEndPoint.Address}:{receiveResult.RemoteEndPoint.Port}");
                             }
+                            else
+                            {
+                                Debug.WriteLine($"Not sending an accounting response to {receiveResult.RemoteEndPoint.Address}:{receiveResult.RemoteEndPoint.Port}");
+                            }
+                        }
+                        else
+                        {
+                            Debug.WriteLine("Invalid accounting request received");
                         }
                     }
                 }
             }, token);
-            
-        }
 
-        /// <summary>
-        /// Event handler method to be fired when the socket receives a data packet.
-        /// </summary>
-        /// <param name="asyncResult">State variable passed from asynchronous receive</param>
-        private void ReceiveCallback(IAsyncResult asyncResult)
-        {
-            // UDP client
-            UdpClient listener = (UdpClient)asyncResult.AsyncState;
-
-            // End point
-            IPEndPoint sourceEP = new IPEndPoint(IPAddress.Any, this.Port);
-
-            
         }
 
         public void Stop()
@@ -112,39 +105,25 @@ namespace Lithnet.Pan.RAProxy
 
             // We're all good, store the attributes.
             List<RadiusAttribute> attributes = RadiusAttribute.ParseAttributeMessage(data, 20);
-
-            // Determine what we need to reply with, and output some debug information
-            List<byte> responseAttributes = new List<byte>();
             foreach (var item in attributes)
             {
-                Debug.WriteLine($" | " +item.ToString());
-
-                if (item.ResponseRequired())
-                    responseAttributes.AddRange(item.GetResponse());
+                Debug.WriteLine($" | " + item.ToString());
             }
 
             // Send the attributes array on to the necessary interface
             Program.AddToQueue(new AccountingRequest(sender, attributes));
 
             // Send a response acknowledgement
-            byte[] responsePacket = new byte[responseAttributes.Count+20];
-
-            // First populate any attributes into the response, since their length is known
-            responsePacket[0] = 5;                            // Type code is 5 for response
+            byte[] responsePacket = new byte[20];
+            responsePacket[0] = 5;                      // Type code is 5 for response
             responsePacket[1] = requestIdentifier;            // Identifier is the same as sent in request
-
-            short responseLength = (short) responsePacket.Length;     // Length of response message is at minimum 20
+            short responseLength = 20;                        // Length of response message is 2 bytes
 
             responsePacket[3] = (byte)(responseLength & 0xff);
             responsePacket[2] = (byte)((responseLength >> 8) & 0xff);
 
             // Use the request authenticator initially to authenticate the response
             Array.Copy(data, 4, responsePacket, 4, 16);
-
-            // Add any response attributes
-            Array.Copy(responseAttributes.ToArray(), 0, responsePacket, 20, responseLength);
-
-            // Authenticate the response
             AuthenticateResponse(responsePacket, sender);
 
             return responsePacket;
@@ -160,7 +139,7 @@ namespace Lithnet.Pan.RAProxy
         private static bool AuthenticateRequest(byte[] data, IPAddress sender)
         {
             // Authenticator is 16 bit MD5 sum, starting at 5th byte
-            byte[] requestAuthenticator = new byte[16];         
+            byte[] requestAuthenticator = new byte[16];
             Array.Copy(data, 4, requestAuthenticator, 0, 16);
 
             // Use the sender's IP to obtain the shared secret
@@ -170,7 +149,7 @@ namespace Lithnet.Pan.RAProxy
 
             // To obtain the MD5 authentication hash, we need to blank out the authenticator bits with zeros
             byte[] secretBytes = Encoding.ASCII.GetBytes(secret);
-            byte[] hashableRequest = new byte[data.Length+secretBytes.Length];
+            byte[] hashableRequest = new byte[data.Length + secretBytes.Length];
             hashableRequest.Initialize();
             Array.Copy(data, 0, hashableRequest, 0, 4);
             Array.Copy(data, 20, hashableRequest, 20, data.Length - 20);
