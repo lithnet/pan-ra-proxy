@@ -27,12 +27,12 @@ namespace Lithnet.Pan.RAProxy
         public const int EventIDAccountingRequestRecieved = 4001;
         public const int EventIDUserIDUpdateComplete = 4002;
 
-        public static PerformanceCounter CounterReceivedPerSecond;
+        public static PerformanceCounter CounterReceivedPerSecond { get; }
 
-        public static PerformanceCounter CounterSentPerSecond;
+        public static PerformanceCounter CounterSentPerSecond { get; }
 
-        public static PerformanceCounter CounterItemsInQueue;
-        
+        public static PerformanceCounter CounterItemsInQueue { get; }
+
         public static void WriteEntry(string message, EventLogEntryType type, int eventID)
         {
             Trace.WriteLine(message);
