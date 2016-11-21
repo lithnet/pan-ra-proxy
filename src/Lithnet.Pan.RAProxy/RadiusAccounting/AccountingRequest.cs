@@ -27,5 +27,27 @@ namespace Lithnet.Pan.RAProxy.RadiusAccounting
         {
             return $"Source IP: {this.IPAddress}\nAttributes:\n{string.Join("\n", this.Attributes.Select(t => t.ToString()))}";
         }
+
+        public void Validate()
+        {
+            RadiusAttribute accountingType = Attributes.FirstOrDefault(t => t.Type == RadiusAttribute.RadiusAttributeType.AcctStatusType);
+            RadiusAttribute framedIP = Attributes.FirstOrDefault(t => t.Type == RadiusAttribute.RadiusAttributeType.FramedIPAddress);
+            RadiusAttribute username = Attributes.FirstOrDefault(t => t.Type == RadiusAttribute.RadiusAttributeType.UserName);
+
+            if (accountingType == null)
+            {
+                throw new MissingValueException("The Acct-Status-Type attribute was not present");
+            }
+
+            if (framedIP == null)
+            {
+                throw new MissingValueException("The Framed-IP-Address attribute was not present");
+            }
+
+            if (username == null)
+            {
+                throw new MissingValueException("The Username attribute was not present");
+            }
+        }
     }
 }
