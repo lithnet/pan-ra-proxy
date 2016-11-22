@@ -27,6 +27,8 @@
           <util:PerformanceCounter Name="Requests in queue" Type="numberOfItems32"  Help="Shows the number of requests in the queue that are waiting to be sent to the firewall"/>
           <util:PerformanceCounter Name="Requests received / second" Type="rateOfCountsPerSecond32" Help="Shows the number of account requests receieved per second"/>
           <util:PerformanceCounter Name="Requests sent / second" Type="rateOfCountsPerSecond32" Help="Shows the number of account requests sent per second"/>
+          <util:PerformanceCounter Name="Failed mappings / second" Type="rateOfCountsPerSecond32" Help="Shows the number of failed user-id mappings per second"/>
+
         </util:PerformanceCategory>
       </Component>
 

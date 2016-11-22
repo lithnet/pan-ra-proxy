@@ -54,6 +54,8 @@
     <Compile Include="Exceptions\MissingValueException.cs" />
     <Compile Include="Exceptions\InvalidRadiusAttributeException.cs" />
     <Compile Include="Exceptions\UnknownRadiusServerException.cs" />
+    <Compile Include="Exceptions\AggregateUserMappingException.cs" />
+    <Compile Include="Exceptions\UserMappingException.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="Exceptions\PanApiException.cs" />
     <Compile Include="Logging.cs" />

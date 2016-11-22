@@ -25,6 +25,34 @@ namespace Lithnet.Pan.RAProxy
             }
         }
 
+        [ConfigurationProperty("batch-size", IsRequired = false, DefaultValue = 150)]
+        public int BatchSize
+        {
+            get
+            {
+                return (int)base["batch-size"];
+            }
+
+            set
+            {
+                base["batch-size"] = value;
+            }
+        }
+
+        [ConfigurationProperty("batch-wait", IsRequired = false, DefaultValue = 150)]
+        public int BatchWait
+        {
+            get
+            {
+                return (int)base["batch-wait"];
+            }
+
+            set
+            {
+                base["batch-wait"] = value;
+            }
+        }
+
         protected override object GetElementKey(ConfigurationElement element)
         {
             return ((PanApiEndpoint)element).ApiUri;

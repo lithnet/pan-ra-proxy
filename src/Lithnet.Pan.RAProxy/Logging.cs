@@ -15,6 +15,9 @@ namespace Lithnet.Pan.RAProxy
         public const int EventIDApiEndpointExceptionWillFailover = 3005;
         public const int EventIDApiEndpointFailover = 3006;
 
+        public const int EventIDApiUserIDMappingLoginFailed= 3007;
+        public const int EventIDApiUserIDMappingLogoutFailed = 3008;
+
 
         // Accounting Errors
         public const int EventIDUnknownRadiusHost = 3101;
@@ -22,6 +25,7 @@ namespace Lithnet.Pan.RAProxy
 
         // Messaging errors
         public const int EventIDMessageSendFailure = 3201;
+        public const int EventIDInvalidRadiusPacket = 3202;
 
         // Info
         public const int EventIDAccountingRequestRecieved = 4001;
@@ -32,6 +36,9 @@ namespace Lithnet.Pan.RAProxy
         public static PerformanceCounter CounterSentPerSecond { get; }
 
         public static PerformanceCounter CounterItemsInQueue { get; }
+
+        public static PerformanceCounter CounterFailedMappingsPerSecond { get; }
+
 
         public static void WriteEntry(string message, EventLogEntryType type, int eventID)
         {
@@ -76,6 +83,16 @@ namespace Lithnet.Pan.RAProxy
                 MachineName = ".",
                 ReadOnly = false
             };
+
+            Logging.CounterFailedMappingsPerSecond = new PerformanceCounter
+            {
+                CategoryName = "PANRAProxy",
+                CounterName = "Failed mappings / second",
+                MachineName = ".",
+                ReadOnly = false
+            };
+
+            Logging.CounterItemsInQueue.RawValue = 0;
         }
     }
 }

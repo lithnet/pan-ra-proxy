@@ -25,14 +25,13 @@ namespace Lithnet.Pan.RAProxy
 
         private static Task requestTask;
 
-        internal const string EventSourceName = "PanRAProxy";
+        private static ManualResetEvent gate = new ManualResetEvent(true);
 
-        internal const short BatchSize = 100;
-        internal const long BatchWaitTime = 4000;
+        internal const string EventSourceName = "PanRAProxy";
 
         public static void Main()
         {
-            bool runService = !System.Diagnostics.Debugger.IsAttached;
+            bool runService = !Debugger.IsAttached;
 
             if (runService)
             {
@@ -65,10 +64,14 @@ namespace Lithnet.Pan.RAProxy
                 Logging.WriteEntry("Server certificate validation has been disabled. The SSL certificate on the Palo Alto device will not be validated", EventLogEntryType.Warning, Logging.EventIDServerCertificateValidationDisabled);
             }
 
-            if (Program.BatchSize > 1)
+            if (Config.BatchSize > 1)
+            {
                 Program.StartBatchQueue();
+            }
             else
+            {
                 Program.StartQueue();
+            }
 
             Program.listener = new AccountingListener(Config.AccountingPort);
             Program.listener.Start(Program.cancellationToken.Token);
@@ -97,7 +100,7 @@ namespace Lithnet.Pan.RAProxy
             {
                 try
                 {
-                    
+
                     foreach (AccountingRequest request in Program.incomingRequests.GetConsumingEnumerable(Program.cancellationToken.Token))
                     {
                         Logging.CounterItemsInQueue.Decrement();
@@ -130,8 +133,15 @@ namespace Lithnet.Pan.RAProxy
 
         internal static void AddToQueue(AccountingRequest request)
         {
-            Program.incomingRequests.Add(request);
+            lock (Program.incomingRequests)
+            {
+                Program.incomingRequests.Add(request);
+            }
+
             Logging.CounterItemsInQueue.Increment();
+
+            // Open the gate if its current closed
+            Program.gate.Set();
         }
 
         private static void SendMessage(AccountingRequest request)
@@ -202,74 +212,71 @@ namespace Lithnet.Pan.RAProxy
 
         private static void StartBatchQueue()
         {
-            Program.incomingRequests = new BlockingCollection<RadiusAccounting.AccountingRequest>();
+            Program.incomingRequests = new BlockingCollection<AccountingRequest>();
 
             Program.requestTask = new Task(() =>
             {
                 try
                 {
-                    Stopwatch timeCounter = new Stopwatch();
-
                     List<AccountingRequest> batchedRequests = new List<AccountingRequest>();
 
                     // Keep processing until the task is cancelled
                     while (!Program.cancellationToken.IsCancellationRequested)
                     {
-                        short batchMessageCount = 0;                    // How many messages are currently batched for send
-                        int msLeftToBatch = (int)Program.BatchWaitTime; // How many milliseconds are left before we try to send the next batch message
-
-                        // Start counting down before we send
-                        timeCounter.Reset();
-                        timeCounter.Start();
-
-                        // Batch all messages received in the next x seconds
-                        while (msLeftToBatch > 0 && batchMessageCount <= Program.BatchSize)
+                        // Batch all messages received
+                        while (batchedRequests.Count <= Config.BatchSize)
                         {
                             AccountingRequest nextRequest;
 
                             // If we still have time, and there's an item in the queue, block until we get it
-                            if (msLeftToBatch >= 0 && Program.incomingRequests.TryTake(out nextRequest, msLeftToBatch, Program.cancellationToken.Token))
+                            if (Program.incomingRequests.TryTake(out nextRequest, Config.BatchWait, Program.cancellationToken.Token))
                             {
                                 // Successfully retrieved an item
-                                batchMessageCount += 1;
                                 Logging.CounterItemsInQueue.Decrement();
 
                                 // Store in the list to be sent
                                 batchedRequests.Add(nextRequest);
 
                                 // Debug info
-                                Logging.WriteDebugEntry($"Incoming accounting request received\n{nextRequest}", EventLogEntryType.Information, Logging.EventIDAccountingRequestRecieved);
+                                Trace.WriteLine($"Incoming accounting request dequeued\n{nextRequest}");
                                 Trace.WriteLine($"Request queue lenth: {Program.incomingRequests.Count}");
-
-                                // Time left before we send whatever we have
-                                msLeftToBatch = (int)(Program.BatchWaitTime - timeCounter.ElapsedMilliseconds);
-
                             }
                             else
                             {
                                 // No item to retrieve in elapsed time
-                                timeCounter.Stop();
-                                msLeftToBatch = 0;
+                                break;
                             }
-
                         }
 
                         // Send what we have
-                        if (batchMessageCount > 0)
+                        if (batchedRequests.Count > 0)
                         {
                             try
                             {
                                 Program.SendBatchMessage(batchedRequests);
-                                batchedRequests.Clear();
                             }
                             catch (Exception ex)
                             {
                                 Logging.WriteEntry($"An error occured while submitting the user-id update\n{ex.Message}\n{ex.StackTrace}", EventLogEntryType.Error, Logging.EventIDMessageSendFailure);
                             }
-
+                            finally
+                            {
+                                batchedRequests.Clear();
+                            }
                         }
-                    }
 
+                        lock (Program.incomingRequests)
+                        {
+                            if (Program.incomingRequests.Count == 0)
+                            {
+                                // Close the gate. AddToQueue will re-open the gate when a new item comes in
+                                Program.gate.Reset();
+                            }
+                        }
+
+                        // Wait for the gate to open if its closed. 
+                        WaitHandle.WaitAny(new[] { Program.cancellationToken.Token.WaitHandle, Program.gate });
+                    }
                 }
                 catch (OperationCanceledException)
                 {
@@ -283,9 +290,14 @@ namespace Lithnet.Pan.RAProxy
         private static void SendBatchMessage(List<AccountingRequest> requests)
         {
             UidMessage message = new UidMessage { Payload = new Payload() };
-            int batchedCount = requests.Count;
             int loginCount = 0;
             int logoutCount = 0;
+
+            if (requests == null || requests.Count <= 0)
+            {
+                Trace.WriteLine($"No requests were in the batch to send");
+                return;
+            }
 
             foreach (AccountingRequest request in requests)
             {
@@ -305,7 +317,10 @@ namespace Lithnet.Pan.RAProxy
                         case 1:
                             // Accounting start
                             if (message.Payload.Login == null)
+                            {
                                 message.Payload.Login = new Login();
+                            }
+
                             message.Payload.Login.Entries.Add(e);
                             loginCount++;
                             break;
@@ -313,29 +328,45 @@ namespace Lithnet.Pan.RAProxy
                         case 2:
                             // Accounting stop
                             if (message.Payload.Logout == null)
+                            {
                                 message.Payload.Logout = new Logout();
+                            }
+
                             message.Payload.Logout.Entries.Add(e);
                             logoutCount++;
                             break;
 
                         default:
-                            // Unknown type error?
+                            Logging.WriteDebugEntry($"A radius accounting packet was discarded because it was of an unknown type.\n{request}", EventLogEntryType.Warning, Logging.EventIDInvalidRadiusPacket);
                             break;
                     }
-
                 }
                 catch (MissingValueException mv)
                 {
-                    Logging.WriteDebugEntry($"A radius accounting packet was discarded because it had incomplete information.\n{mv.Message}", EventLogEntryType.Warning, Logging.EventIDMessageSendFailure);
+                    Logging.WriteDebugEntry($"A radius accounting packet was discarded because it had incomplete information.\n{mv.Message}", EventLogEntryType.Warning, Logging.EventIDInvalidRadiusPacket);
                 }
-
             }
+
+            int sending = loginCount + logoutCount;
 
             try
             {
-                Logging.CounterSentPerSecond.Increment();
+                if (sending <= 0)
+                {
+                    Trace.WriteLine($"Nothing to send in batch. {requests.Count} were discarded");
+                    return;
+                }
+
+                Trace.WriteLine($"Sending batch of {sending}");
                 message.Send();
-                Logging.WriteEntry($"UserID API mapping succeeded\nLogins: {loginCount}\nLogouts: {logoutCount}\nErrors: {batchedCount - (loginCount + logoutCount)}", EventLogEntryType.Information, Logging.EventIDUserIDUpdateComplete);
+                Logging.CounterSentPerSecond.IncrementBy(sending);
+                Trace.WriteLine($"Batch completed");
+                Logging.WriteEntry($"UserID API mapping succeeded\nLogins: {loginCount}\nLogouts: {logoutCount}\n", EventLogEntryType.Information, Logging.EventIDUserIDUpdateComplete);
+            }
+            catch (AggregateUserMappingException ex)
+            {
+                Logging.WriteEntry($"{ex.Message}\n{ex.InnerExceptions.Count} in batch out of {sending} failed", EventLogEntryType.Error, Logging.EventIDMessageSendFailure);
+                Logging.CounterSentPerSecond.IncrementBy(sending);
             }
             catch (PanApiException ex)
             {
@@ -346,6 +377,5 @@ namespace Lithnet.Pan.RAProxy
                 Logging.WriteEntry($"An error occured while submitting the user-id update\n{ex.Message}\n{ex.StackTrace}", EventLogEntryType.Error, Logging.EventIDMessageSendFailure);
             }
         }
-
     }
 }

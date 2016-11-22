@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 using System.IO;
 using System.Net;
@@ -36,49 +37,116 @@ namespace Lithnet.Pan.RAProxy
                 d.LoadXml(response);
 
                 XmlNode status = d.SelectSingleNode("/response/@status");
+                List<Exception> exceptions = new List<Exception>();
 
-                if (status != null)
-                {
-                    if (status.InnerText == "success")
-                    {
-                        return;
-                    }
-
-                    if (status.InnerText == "error")
-                    {
-                        XmlNode message = d.SelectSingleNode("/response/msg/line/uid-response/payload/logout/entry/@message");
-
-                        if (message != null)
-                        {
-                            if (message.InnerText.Equals("delete mapping failed", StringComparison.InvariantCultureIgnoreCase))
-                            {
-                                if (!Config.DebuggingEnabled)
-                                {
-                                    return;
-                                }
-                            }
-                        }
-                    }
-
-                    Logging.WriteEntry($"The API called failed with status {status.InnerText}\n{response}", EventLogEntryType.Error, Logging.EventIDApiException);
-                    throw new PanApiException($"The API called failed with status {status.InnerText}", response);
-
-                }
-                else
+                if (status == null)
                 {
                     Logging.WriteEntry($"The API called failed with an unknown result\n{response}", EventLogEntryType.Error, Logging.EventIDUnknownApiException);
                     throw new PanApiException($"The API called failed with an unknown result", response);
                 }
+
+                if (status.InnerText == "success")
+                {
+                    return;
+                }
+
+                if (status.InnerText == "error")
+                {
+                    XmlNodeList xmlNodeList = d.SelectNodes("/response/msg/line/uid-response/payload/logout/entry");
+
+                    if (xmlNodeList != null)
+                    {
+                        foreach (UserMappingException ex in Message.GetExceptions(xmlNodeList))
+                        {
+                            exceptions.Add(ex);
+                            Logging.WriteEntry($"The logout user mapping for {ex.Username} with ip {ex.IPAddress} failed with message '{ex.Message}'", EventLogEntryType.Error, Logging.EventIDApiUserIDMappingLogoutFailed);
+                        }
+                    }
+
+                    xmlNodeList = d.SelectNodes("/response/msg/line/uid-response/payload/login/entry");
+
+                    if (xmlNodeList != null)
+                    {
+                        foreach (UserMappingException ex in Message.GetExceptions(xmlNodeList))
+                        {
+                            exceptions.Add(ex);
+                            Logging.WriteEntry($"The login user mapping for {ex.Username} with ip {ex.IPAddress} failed with message '{ex.Message}'", EventLogEntryType.Error, Logging.EventIDApiUserIDMappingLoginFailed);
+                        }
+                    }
+                }
+
+                if (exceptions.Count == 1)
+                {
+                    throw exceptions[0];
+                }
+
+                if (exceptions.Count > 1)
+                {
+                    throw new AggregateUserMappingException("Multiple user mapping operations failed", exceptions);
+                }
+            }
+            catch (AggregateException)
+            {
+                throw;
+            }
+            catch (PanApiException)
+            {
+                throw;
             }
             catch
             {
-                Logging.WriteEntry($"The API called failed with an unsupported response\n{response}", EventLogEntryType.Error, Logging.EventIDUnknownApiResponse);
-                throw new PanApiException($"The API called failed with an unsupported response", response);
+                Logging.WriteEntry($"An error occurred parsing the API response\n{response}", EventLogEntryType.Error, Logging.EventIDUnknownApiResponse);
+                throw new PanApiException($"An error occurred parsing the API response", response);
             }
         }
 
+
+        private static IList<UserMappingException> GetExceptions(XmlNodeList xmlNodeList)
+        {
+            List<UserMappingException> exceptions = new List<UserMappingException>();
+
+            foreach (XmlNode entry in xmlNodeList)
+            {
+                UserMappingException e = GetException(entry);
+
+                if (e != null)
+                {
+                    exceptions.Add(e);
+                }
+            }
+
+            return exceptions;
+        }
+
+        private static UserMappingException GetException(XmlNode entry)
+        {
+            XmlAttributeCollection attributes = entry.Attributes;
+
+            if (attributes == null)
+            {
+                return null;
+            }
+
+            UserMappingException e = new UserMappingException(
+                attributes["message"]?.InnerText,
+                attributes["name"]?.InnerText,
+                attributes["ip"]?.InnerText);
+
+            if (e.Message.Equals("delete mapping failed", StringComparison.InvariantCultureIgnoreCase))
+            {
+                if (!Config.DebuggingEnabled)
+                {
+                    return null;
+                }
+            }
+
+            Logging.CounterFailedMappingsPerSecond.Increment();
+
+            return e;
+        }
+
         /*\
-         
+
              <response status="error">
                  <msg>
                   <line>
@@ -90,9 +158,9 @@ namespace Lithnet.Pan.RAProxy
                             </logout>
                         </payload>
                     </uid-response>
-</line></msg></response>
+        </line></msg></response>
 
- */
+        */
 
         private string Submit()
         {
@@ -131,6 +199,7 @@ namespace Lithnet.Pan.RAProxy
             builder.Query = queryString.ToString();
 
             HttpWebRequest request = this.GetRequestContent(builder.Uri, messageText);
+            request.ServicePoint.Expect100Continue = false;
 
             using (WebResponse response = request.GetResponse())
             {
