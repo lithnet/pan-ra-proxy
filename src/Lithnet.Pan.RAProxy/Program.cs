@@ -290,8 +290,6 @@ namespace Lithnet.Pan.RAProxy
         private static void SendBatchMessage(List<AccountingRequest> requests)
         {
             UidMessage message = new UidMessage { Payload = new Payload() };
-            int loginCount = 0;
-            int logoutCount = 0;
 
             if (requests == null || requests.Count <= 0)
             {
@@ -308,32 +306,27 @@ namespace Lithnet.Pan.RAProxy
 
                     Entry e = new Entry
                     {
-                        Username = request.Attributes.FirstOrDefault(t => t.Type == RadiusAttribute.RadiusAttributeType.UserName).ValueAsString,
-                        IpAddress = request.Attributes.FirstOrDefault(t => t.Type == RadiusAttribute.RadiusAttributeType.FramedIPAddress).ValueAsString
+                        Username = request.Attributes.FirstOrDefault(t => t.Type == RadiusAttribute.RadiusAttributeType.UserName)?.ValueAsString,
+                        IpAddress = request.Attributes.FirstOrDefault(t => t.Type == RadiusAttribute.RadiusAttributeType.FramedIPAddress)?.ValueAsString
                     };
 
-                    switch (request.Attributes.FirstOrDefault(t => t.Type == RadiusAttribute.RadiusAttributeType.AcctStatusType).ValueAsInt)
+                    switch (request.Attributes.FirstOrDefault(t => t.Type == RadiusAttribute.RadiusAttributeType.AcctStatusType)?.ValueAsInt)
                     {
                         case 1:
                             // Accounting start
-                            if (message.Payload.Login == null)
-                            {
-                                message.Payload.Login = new Login();
-                            }
-
+                            
                             message.Payload.Login.Entries.Add(e);
-                            loginCount++;
+
+                            if (message.Payload.Logout.Entries.Remove(e))
+                            {
+                                Trace.WriteLine($"Removed logout entry superceeded by login entry {e.Username}:{e.IpAddress}");
+                            }
+                            
                             break;
 
                         case 2:
                             // Accounting stop
-                            if (message.Payload.Logout == null)
-                            {
-                                message.Payload.Logout = new Logout();
-                            }
-
                             message.Payload.Logout.Entries.Add(e);
-                            logoutCount++;
                             break;
 
                         default:
@@ -347,7 +340,7 @@ namespace Lithnet.Pan.RAProxy
                 }
             }
 
-            int sending = loginCount + logoutCount;
+            int sending = message.Payload.Login.Entries.Count + message.Payload.Logout.Entries.Count;
 
             try
             {
@@ -356,12 +349,12 @@ namespace Lithnet.Pan.RAProxy
                     Trace.WriteLine($"Nothing to send in batch. {requests.Count} were discarded");
                     return;
                 }
-
+                
                 Trace.WriteLine($"Sending batch of {sending}");
                 message.Send();
                 Logging.CounterSentPerSecond.IncrementBy(sending);
                 Trace.WriteLine($"Batch completed");
-                Logging.WriteEntry($"UserID API mapping succeeded\nLogins: {loginCount}\nLogouts: {logoutCount}\n", EventLogEntryType.Information, Logging.EventIDUserIDUpdateComplete);
+                Logging.WriteEntry($"UserID API mapping succeeded\nLogins: {message.Payload.Login.Entries.Count}\nLogouts: {message.Payload.Logout.Entries.Count}\n", EventLogEntryType.Information, Logging.EventIDUserIDUpdateComplete);
             }
             catch (AggregateUserMappingException ex)
             {

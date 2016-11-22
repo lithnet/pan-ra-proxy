@@ -13,6 +13,8 @@ namespace Lithnet.Pan.RAProxy
     {
         public Payload()
         {
+            this.Login = new Login();
+            this.Logout = new Logout();
         }
 
         [XmlElement(ElementName = "login")]

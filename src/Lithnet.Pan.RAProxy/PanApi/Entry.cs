@@ -18,6 +18,50 @@ namespace Lithnet.Pan.RAProxy
 
         [XmlAttribute(AttributeName = "timeout")]
         public string Timeout { get; set; }
+
+        public static bool operator ==(Entry e1, Entry e2)
+        {
+            if (Object.ReferenceEquals(e1, e2))
+            {
+                return true;
+            }
+
+            if (Object.ReferenceEquals(e1, null))
+            {
+                return false;
+            }
+
+            if (Object.ReferenceEquals(e2, null))
+            {
+                return false;
+            }
+
+            return e1.Equals(e2);
+        } 
+
+        public static bool operator !=(Entry e1, Entry e2)
+        {
+            return !(e1 == e2);
+        }
+
+        public override bool Equals(object obj)
+        {
+            // Is null?
+            if (Object.ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            // Is the same object?
+            if (Object.ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            Entry e = obj as Entry;
+
+            return e != null && e.Username == this.Username && e.IpAddress == this.IpAddress;
+        }
     }
 }
 
