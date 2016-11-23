@@ -314,14 +314,13 @@ namespace Lithnet.Pan.RAProxy
                     {
                         case 1:
                             // Accounting start
-                            
                             message.Payload.Login.Entries.Add(e);
 
                             if (message.Payload.Logout.Entries.Remove(e))
                             {
                                 Trace.WriteLine($"Removed logout entry superceeded by login entry {e.Username}:{e.IpAddress}");
                             }
-                            
+
                             break;
 
                         case 2:
@@ -330,12 +329,14 @@ namespace Lithnet.Pan.RAProxy
                             break;
 
                         default:
+                            Logging.CounterIgnoredPerSecond.Increment();
                             Logging.WriteDebugEntry($"A radius accounting packet was discarded because it was of an unknown type.\n{request}", EventLogEntryType.Warning, Logging.EventIDInvalidRadiusPacket);
                             break;
                     }
                 }
                 catch (MissingValueException mv)
                 {
+                    Logging.CounterIgnoredPerSecond.Increment();
                     Logging.WriteDebugEntry($"A radius accounting packet was discarded because it had incomplete information.\n{mv.Message}", EventLogEntryType.Warning, Logging.EventIDInvalidRadiusPacket);
                 }
             }
@@ -349,10 +350,12 @@ namespace Lithnet.Pan.RAProxy
                     Trace.WriteLine($"Nothing to send in batch. {requests.Count} were discarded");
                     return;
                 }
-                
+
                 Trace.WriteLine($"Sending batch of {sending}");
                 message.Send();
                 Logging.CounterSentPerSecond.IncrementBy(sending);
+                Logging.CounterSentLoginsPerSecond.IncrementBy(message.Payload.Login.Entries.Count);
+                Logging.CounterSentLogoutsPerSecond.IncrementBy(message.Payload.Logout.Entries.Count);
                 Trace.WriteLine($"Batch completed");
                 Logging.WriteEntry($"UserID API mapping succeeded\nLogins: {message.Payload.Login.Entries.Count}\nLogouts: {message.Payload.Logout.Entries.Count}\n", EventLogEntryType.Information, Logging.EventIDUserIDUpdateComplete);
             }
@@ -360,6 +363,8 @@ namespace Lithnet.Pan.RAProxy
             {
                 Logging.WriteEntry($"{ex.Message}\n{ex.InnerExceptions.Count} in batch out of {sending} failed", EventLogEntryType.Error, Logging.EventIDMessageSendFailure);
                 Logging.CounterSentPerSecond.IncrementBy(sending);
+                Logging.CounterSentLoginsPerSecond.IncrementBy(message.Payload.Login.Entries.Count);
+                Logging.CounterSentLogoutsPerSecond.IncrementBy(message.Payload.Logout.Entries.Count);
             }
             catch (PanApiException ex)
             {

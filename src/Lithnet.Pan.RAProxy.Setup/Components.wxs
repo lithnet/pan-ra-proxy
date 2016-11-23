@@ -25,10 +25,13 @@
         <ServiceControl Id="ServiceControlEvents" Name="[SERVICE_NAME]" Start="install" Stop="both" Remove="uninstall" Wait="yes"/>
         <util:PerformanceCategory Id="PerformanceCounter" Name="PANRAProxy" DefaultLanguage="english">
           <util:PerformanceCounter Name="Requests in queue" Type="numberOfItems32"  Help="Shows the number of requests in the queue that are waiting to be sent to the firewall"/>
-          <util:PerformanceCounter Name="Requests received / second" Type="rateOfCountsPerSecond32" Help="Shows the number of account requests receieved per second"/>
+          <util:PerformanceCounter Name="Accounting requests received / second" Type="rateOfCountsPerSecond32" Help="Shows the number of accounting requests receieved per second"/>
+          <util:PerformanceCounter Name="Accounting requests discarded / second" Type="rateOfCountsPerSecond32" Help="Shows the number of accounting requests receieved per second"/>
+          <util:PerformanceCounter Name="Accounting start requests received / second" Type="rateOfCountsPerSecond32" Help="Shows the number of accounting start requests receieved per second"/>
+          <util:PerformanceCounter Name="Accounting stop requests received / second" Type="rateOfCountsPerSecond32" Help="Shows the number of accounting stop requests receieved per second"/>
+          <util:PerformanceCounter Name="Accounting other requests received / second" Type="rateOfCountsPerSecond32" Help="Shows the number of other accounting requests receieved per second"/>
           <util:PerformanceCounter Name="Requests sent / second" Type="rateOfCountsPerSecond32" Help="Shows the number of account requests sent per second"/>
           <util:PerformanceCounter Name="Failed mappings / second" Type="rateOfCountsPerSecond32" Help="Shows the number of failed user-id mappings per second"/>
-
         </util:PerformanceCategory>
       </Component>
 

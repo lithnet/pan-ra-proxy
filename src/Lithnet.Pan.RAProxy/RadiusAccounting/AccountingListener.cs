@@ -63,6 +63,7 @@ namespace Lithnet.Pan.RAProxy
                             }
                             else
                             {
+                                Logging.CounterReceivedDiscardedPerSecond.Increment();
                                 Trace.WriteLine("Invalid accounting request received");
                             }
                         }
@@ -126,14 +127,17 @@ namespace Lithnet.Pan.RAProxy
             // Determine if the packet contains Accounting-Request type code (4), otherwise do nothing
             if (requestType != 4)
             {
+                Logging.CounterReceivedDiscardedPerSecond.Increment();
                 Trace.WriteLine(" - Ignored: Not AccountingRequest type.");
                 return null;
             }
+
             Trace.WriteLine($" - AccountingRequest #{requestIdentifier} with length {requestLength}.");
 
             // Check the authenticator token matches the shared secret, otherwise do nothing
             if (!AuthenticateRequest(data, sender))
             {
+                Logging.CounterReceivedDiscardedPerSecond.Increment();
                 Trace.WriteLine(" - Ignored: Invalid Authenticator Token.");
                 return null;
             }
@@ -145,10 +149,30 @@ namespace Lithnet.Pan.RAProxy
             List<byte> responseAttributes = new List<byte>();
             foreach (var item in attributes)
             {
-                Trace.WriteLine($" | " + item.ToString());
+                Trace.WriteLine($" | {item}");
 
                 if (item.IsRequiredInResponse())
+                {
                     responseAttributes.AddRange(item.GetResponse());
+                }
+
+                if (item.Type == RadiusAttribute.RadiusAttributeType.AcctStatusType)
+                {
+                    switch (item.ValueAsInt)
+                    {
+                        case 1:
+                            Logging.CounterReceivedAccountingStartPerSecond.Increment();
+                            break;
+
+                        case 2:
+                            Logging.CounterReceivedAccountingStopPerSecond.Increment();
+                            break;
+
+                        default:
+                            Logging.CounterReceivedAccountingOtherPerSecond.Increment();
+                            break;
+                    }
+                }
             }
 
             // Send the attributes array on to the necessary interface

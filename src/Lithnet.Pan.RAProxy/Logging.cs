@@ -33,18 +33,30 @@ namespace Lithnet.Pan.RAProxy
 
         public static PerformanceCounter CounterReceivedPerSecond { get; }
 
+        public static PerformanceCounter CounterReceivedAccountingStartPerSecond { get; }
+
+        public static PerformanceCounter CounterReceivedAccountingStopPerSecond { get; }
+
+        public static PerformanceCounter CounterReceivedAccountingOtherPerSecond { get; }
+
+        public static PerformanceCounter CounterReceivedDiscardedPerSecond { get; }
+        
         public static PerformanceCounter CounterSentPerSecond { get; }
 
+        public static PerformanceCounter CounterSentLoginsPerSecond { get; }
+
+        public static PerformanceCounter CounterSentLogoutsPerSecond { get; }
+
+        public static PerformanceCounter CounterIgnoredPerSecond { get; }
+        
         public static PerformanceCounter CounterItemsInQueue { get; }
 
         public static PerformanceCounter CounterFailedMappingsPerSecond { get; }
-
-
+        
         public static void WriteEntry(string message, EventLogEntryType type, int eventID)
         {
             Trace.WriteLine(message);
             EventLog.WriteEntry(Program.EventSourceName, message, type, eventID);
-
         }
 
         public static void WriteDebugEntry(string message, EventLogEntryType type, int eventID)
@@ -55,15 +67,45 @@ namespace Lithnet.Pan.RAProxy
                 EventLog.WriteEntry(Program.EventSourceName, message, type, eventID);
             }
         }
-
-
-
+        
         static Logging()
         {
             Logging.CounterReceivedPerSecond = new PerformanceCounter
             {
                 CategoryName = "PANRAProxy",
-                CounterName = "Requests received / second",
+                CounterName = "Accounting requests received / second",
+                MachineName = ".",
+                ReadOnly = false
+            };
+
+            Logging.CounterReceivedDiscardedPerSecond = new PerformanceCounter
+            {
+                CategoryName = "PANRAProxy",
+                CounterName = "Accounting requests discarded / second",
+                MachineName = ".",
+                ReadOnly = false
+            };
+            
+            Logging.CounterReceivedAccountingStartPerSecond = new PerformanceCounter
+            {
+                CategoryName = "PANRAProxy",
+                CounterName = "Accounting start requests received / second",
+                MachineName = ".",
+                ReadOnly = false
+            };
+
+            Logging.CounterReceivedAccountingStopPerSecond = new PerformanceCounter
+            {
+                CategoryName = "PANRAProxy",
+                CounterName = "Accounting stop requests received / second",
+                MachineName = ".",
+                ReadOnly = false
+            };
+
+            Logging.CounterReceivedAccountingOtherPerSecond = new PerformanceCounter
+            {
+                CategoryName = "PANRAProxy",
+                CounterName = "Accounting other requests received / second",
                 MachineName = ".",
                 ReadOnly = false
             };
@@ -72,6 +114,30 @@ namespace Lithnet.Pan.RAProxy
             {
                 CategoryName = "PANRAProxy",
                 CounterName = "Requests sent / second",
+                MachineName = ".",
+                ReadOnly = false
+            };
+
+            Logging.CounterSentLoginsPerSecond = new PerformanceCounter
+            {
+                CategoryName = "PANRAProxy",
+                CounterName = "Requests sent login / second",
+                MachineName = ".",
+                ReadOnly = false
+            };
+
+            Logging.CounterSentLogoutsPerSecond = new PerformanceCounter
+            {
+                CategoryName = "PANRAProxy",
+                CounterName = "Requests sent logout / second",
+                MachineName = ".",
+                ReadOnly = false
+            };
+
+            Logging.CounterIgnoredPerSecond = new PerformanceCounter
+            {
+                CategoryName = "PANRAProxy",
+                CounterName = "Requests ignored / second",
                 MachineName = ".",
                 ReadOnly = false
             };
