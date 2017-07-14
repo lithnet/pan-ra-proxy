@@ -2,19 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.ServiceProcess;
-using System.Text;
 using System.Threading.Tasks;
-using System.Configuration;
 using System.Diagnostics;
 using System.Threading;
+using System.Collections.Concurrent;
+using System.Net;
+using Lithnet.Pan.RAProxy.RadiusAccounting;
 
 namespace Lithnet.Pan.RAProxy
 {
-    using System.Collections.Concurrent;
-    using System.Deployment.Internal;
-    using System.Net;
-    using RadiusAccounting;
-
     public static class Program
     {
         private static AccountingListener listener;
@@ -163,6 +159,12 @@ namespace Lithnet.Pan.RAProxy
             if (username == null)
             {
                 throw new MissingValueException("The Username attribute was not present");
+            }
+
+            if (Config.IsUsernameFilterMatch(username.ValueAsString))
+            {
+                Logging.WriteDebugEntry($"Dropping accounting request for user '{username.ValueAsString}' matching filter", EventLogEntryType.Information, Logging.EventIDFilteredUsernameDropped);
+                return;
             }
 
             Entry e = new Entry

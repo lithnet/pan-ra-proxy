@@ -1,15 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Diagnostics;
+using System.Net;
 using System.Configuration;
+using System.Text.RegularExpressions;
 
 namespace Lithnet.Pan.RAProxy
 {
-    using System.Diagnostics;
-    using System.Net;
-
     internal static class Config
     {
         private static IList<PanApiEndpoint> apiEndpoints;
@@ -19,6 +17,10 @@ namespace Lithnet.Pan.RAProxy
         private static RAProxyConfigurationSection section = ConfigurationManager.GetSection(RAProxyConfigurationSection.SectionName) as RAProxyConfigurationSection;
 
         private static Dictionary<string, string> cachedSecrets = new Dictionary<string, string>();
+
+        private static Regex usernameRegex;
+
+        private static bool compiledRegex;
 
         public static IList<PanApiEndpoint> ApiEndpoints
         {
@@ -75,7 +77,34 @@ namespace Lithnet.Pan.RAProxy
         public static int BatchSize => Config.section.PanApi.BatchSize;
 
         public static int BatchWait => Config.section.PanApi.BatchWait;
+        
+        private static Regex UsernameFilterRegex
+        {
+            get
+            {
+                if (!Config.compiledRegex)
+                {
+                    if (!string.IsNullOrEmpty(Config.section.UsernameFilter))
+                    {
+                        Config.usernameRegex = new Regex(Config.section.UsernameFilter, RegexOptions.IgnoreCase);
+                    }
 
+                    Config.compiledRegex = true;
+                }
+
+                return Config.usernameRegex;
+            }
+        }
+
+        public static bool IsUsernameFilterMatch(string username)
+        {
+            if (Config.UsernameFilterRegex != null)
+            {
+                return Config.UsernameFilterRegex.IsMatch(username);
+            }
+
+            return false;
+        }
 
         public static string GetSecretForIP(IPAddress address)
         {

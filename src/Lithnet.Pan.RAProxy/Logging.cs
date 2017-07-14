@@ -14,7 +14,6 @@ namespace Lithnet.Pan.RAProxy
         public const int EventIDMessageSendException = 3004;
         public const int EventIDApiEndpointExceptionWillFailover = 3005;
         public const int EventIDApiEndpointFailover = 3006;
-
         public const int EventIDApiUserIDMappingLoginFailed= 3007;
         public const int EventIDApiUserIDMappingLogoutFailed = 3008;
 
@@ -30,6 +29,7 @@ namespace Lithnet.Pan.RAProxy
         // Info
         public const int EventIDAccountingRequestRecieved = 4001;
         public const int EventIDUserIDUpdateComplete = 4002;
+        public const int EventIDFilteredUsernameDropped = 4003;
 
         public static PerformanceCounter CounterReceivedPerSecond { get; }
 
@@ -62,6 +62,7 @@ namespace Lithnet.Pan.RAProxy
         public static void WriteDebugEntry(string message, EventLogEntryType type, int eventID)
         {
             Trace.WriteLine(message);
+
             if (Config.DebuggingEnabled)
             {
                 EventLog.WriteEntry(Program.EventSourceName, message, type, eventID);

@@ -4,13 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Configuration;
+using System.Text.RegularExpressions;
 
 namespace Lithnet.Pan.RAProxy
 {
     public class RAProxyConfigurationSection : ConfigurationSection
     {
         public const string SectionName = "ra-proxy-config";
-
 
         [ConfigurationProperty("debug-enabled", IsRequired = false, DefaultValue = false)]
         public bool DebuggingEnabled
@@ -24,6 +24,20 @@ namespace Lithnet.Pan.RAProxy
                 this["debug-enabled"] = value;
             }
         }
+
+        [ConfigurationProperty("username-filter", IsRequired = false, DefaultValue = null)]
+        public string UsernameFilter
+        {
+            get
+            {
+                return (string)this["username-filter"];
+            }
+            set
+            {
+                this["username-filter"] = value;
+            }
+        }
+
 
         [ConfigurationProperty("radius-servers")]
         public RadiusServerCollection RadiusServers
