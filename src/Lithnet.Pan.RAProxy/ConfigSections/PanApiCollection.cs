@@ -25,7 +25,7 @@ namespace Lithnet.Pan.RAProxy
             }
         }
 
-        [ConfigurationProperty("batch-size", IsRequired = false, DefaultValue = 150)]
+        [ConfigurationProperty("batch-size", IsRequired = false, DefaultValue = 200)]
         public int BatchSize
         {
             get
@@ -39,7 +39,7 @@ namespace Lithnet.Pan.RAProxy
             }
         }
 
-        [ConfigurationProperty("batch-wait", IsRequired = false, DefaultValue = 150)]
+        [ConfigurationProperty("batch-wait", IsRequired = false, DefaultValue = 50)]
         public int BatchWait
         {
             get

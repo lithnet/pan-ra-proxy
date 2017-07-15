@@ -64,6 +64,7 @@ namespace Lithnet.Pan.RAProxy
                             else
                             {
                                 Logging.CounterReceivedDiscardedPerSecond.Increment();
+                                Logging.WriteDebugEntry("An invalid accounting request was received", EventLogEntryType.Error, Logging.EventIDInvalidRadiusPacket);
                                 Trace.WriteLine("Invalid accounting request received");
                             }
                         }

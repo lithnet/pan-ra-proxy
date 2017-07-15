@@ -110,11 +110,11 @@ namespace Lithnet.Pan.RAProxy
                         }
                         catch (MissingValueException ex)
                         {
-                            Logging.WriteDebugEntry($"A radius accounting packet was discarded because it had incomplete information.\n{ex.Message}", EventLogEntryType.Warning, Logging.EventIDMessageSendFailure);
+                            Logging.WriteDebugEntry($"A radius accounting packet was discarded because it had incomplete information.\n{ex.Message}", EventLogEntryType.Warning, Logging.EventIDMissingAttribute);
                         }
                         catch (Exception ex)
                         {
-                            Logging.WriteEntry($"An error occured while submitting the user-id update\n{ex.Message}\n{ex.StackTrace}", EventLogEntryType.Error, Logging.EventIDMessageSendFailure);
+                            Logging.WriteEntry($"An error occured while submitting the user-id update\n{ex.Message}\n{ex.StackTrace}", EventLogEntryType.Error, Logging.EventIDMessageSendException);
                         }
                     }
                 }
@@ -204,11 +204,11 @@ namespace Lithnet.Pan.RAProxy
             }
             catch (PanApiException ex)
             {
-                Logging.WriteEntry($"The UserID API called failed\nUsername: {username.ValueAsString}\nIP address: {framedIP.ValueAsString}\n{ex.Message}\n{ex.StackTrace}\n{ex.Detail}", EventLogEntryType.Error, Logging.EventIDMessageSendFailure);
+                Logging.WriteEntry($"The UserID API called failed\nUsername: {username.ValueAsString}\nIP address: {framedIP.ValueAsString}\n{ex.Message}\n{ex.StackTrace}\n{ex.Detail}", EventLogEntryType.Error, Logging.EventIDApiException);
             }
             catch (Exception ex)
             {
-                Logging.WriteEntry($"An error occured while submitting the user-id update\nUsername: {username.ValueAsString}\nIP address: {framedIP.ValueAsString}\n{ex.Message}\n{ex.StackTrace}", EventLogEntryType.Error, Logging.EventIDMessageSendFailure);
+                Logging.WriteEntry($"An error occured while submitting the user-id update\nUsername: {username.ValueAsString}\nIP address: {framedIP.ValueAsString}\n{ex.Message}\n{ex.StackTrace}", EventLogEntryType.Error, Logging.EventIDMessageSendException);
             }
         }
 
@@ -259,7 +259,7 @@ namespace Lithnet.Pan.RAProxy
                             }
                             catch (Exception ex)
                             {
-                                Logging.WriteEntry($"An error occured while submitting the user-id update\n{ex.Message}\n{ex.StackTrace}", EventLogEntryType.Error, Logging.EventIDMessageSendFailure);
+                                Logging.WriteEntry($"An error occured while submitting the user-id update\n{ex.Message}\n{ex.StackTrace}", EventLogEntryType.Error, Logging.EventIDMessageSendException);
                             }
                             finally
                             {
@@ -363,18 +363,18 @@ namespace Lithnet.Pan.RAProxy
             }
             catch (AggregateUserMappingException ex)
             {
-                Logging.WriteEntry($"{ex.Message}\n{ex.InnerExceptions.Count} in batch out of {sending} failed", EventLogEntryType.Error, Logging.EventIDMessageSendFailure);
+                Logging.WriteEntry($"{ex.Message}\n{ex.InnerExceptions.Count} in batch out of {sending} failed", EventLogEntryType.Error, Logging.EventIDMessageSendException);
                 Logging.CounterSentPerSecond.IncrementBy(sending);
                 Logging.CounterSentLoginsPerSecond.IncrementBy(message.Payload.Login.Entries.Count);
                 Logging.CounterSentLogoutsPerSecond.IncrementBy(message.Payload.Logout.Entries.Count);
             }
             catch (PanApiException ex)
             {
-                Logging.WriteEntry($"The UserID API called failed\n{ex.Message}\n{ex.StackTrace}\n{ex.Detail}", EventLogEntryType.Error, Logging.EventIDMessageSendFailure);
+                Logging.WriteEntry($"The UserID API called failed\n{ex.Message}\n{ex.StackTrace}\n{ex.Detail}", EventLogEntryType.Error, Logging.EventIDUnknownApiException);
             }
             catch (Exception ex)
             {
-                Logging.WriteEntry($"An error occured while submitting the user-id update\n{ex.Message}\n{ex.StackTrace}", EventLogEntryType.Error, Logging.EventIDMessageSendFailure);
+                Logging.WriteEntry($"An error occured while submitting the user-id update\n{ex.Message}\n{ex.StackTrace}", EventLogEntryType.Error, Logging.EventIDMessageSendException);
             }
         }
     }

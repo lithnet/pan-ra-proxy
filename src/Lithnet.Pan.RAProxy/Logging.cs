@@ -21,9 +21,6 @@ namespace Lithnet.Pan.RAProxy
         // Accounting Errors
         public const int EventIDUnknownRadiusHost = 3101;
         public const int EventIDMissingAttribute = 3102;
-
-        // Messaging errors
-        public const int EventIDMessageSendFailure = 3201;
         public const int EventIDInvalidRadiusPacket = 3202;
 
         // Info
