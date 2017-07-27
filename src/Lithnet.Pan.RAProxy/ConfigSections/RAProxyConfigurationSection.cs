@@ -38,6 +38,20 @@ namespace Lithnet.Pan.RAProxy
             }
         }
 
+        [ConfigurationProperty("username-rewrites")]
+        public UsernameRewriteCollection UsernameRewrites
+        {
+            get
+            {
+                return (UsernameRewriteCollection)this["username-rewrites"];
+            }
+
+            set
+            {
+                this["username-rewrites"] = value;
+            }
+        }
+
 
         [ConfigurationProperty("radius-servers")]
         public RadiusServerCollection RadiusServers

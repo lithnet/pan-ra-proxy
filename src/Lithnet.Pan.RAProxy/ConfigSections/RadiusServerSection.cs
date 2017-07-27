@@ -4,12 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Configuration;
+using System.Net;
+using System.Net.Sockets;
 
 namespace Lithnet.Pan.RAProxy
 {
-    using System.Net;
-    using System.Net.Sockets;
-
     public class RadiusServerSection : ConfigurationElement
     {
         [ConfigurationProperty("host", IsRequired = true)]

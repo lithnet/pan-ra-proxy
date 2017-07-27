@@ -104,7 +104,7 @@ namespace Lithnet.Pan.RAProxy
                         try
                         {
                             Logging.WriteDebugEntry($"Incoming accounting request received\n{request}", EventLogEntryType.Information, Logging.EventIDAccountingRequestRecieved);
-                            Trace.WriteLine($"Request queue lenth: {Program.incomingRequests.Count}");
+                            Trace.WriteLine($"Request queue length: {Program.incomingRequests.Count}");
 
                             Program.SendMessage(request);
                         }
@@ -114,7 +114,7 @@ namespace Lithnet.Pan.RAProxy
                         }
                         catch (Exception ex)
                         {
-                            Logging.WriteEntry($"An error occured while submitting the user-id update\n{ex.Message}\n{ex.StackTrace}", EventLogEntryType.Error, Logging.EventIDMessageSendException);
+                            Logging.WriteEntry($"An error occurred while submitting the user-id update\n{ex.Message}\n{ex.StackTrace}", EventLogEntryType.Error, Logging.EventIDMessageSendException);
                         }
                     }
                 }
@@ -169,7 +169,7 @@ namespace Lithnet.Pan.RAProxy
 
             Entry e = new Entry
             {
-                Username = username.ValueAsString,
+                Username = Config.MatchReplace(username.ValueAsString),
                 IpAddress = framedIP.ValueAsString
             };
 
@@ -200,15 +200,15 @@ namespace Lithnet.Pan.RAProxy
             {
                 Logging.CounterSentPerSecond.Increment();
                 message.Send();
-                Logging.WriteEntry($"UserID API mapping succeeded\nUsername: {username.ValueAsString}\nIP address: {framedIP.ValueAsString}\nType: {type}", EventLogEntryType.Information, Logging.EventIDUserIDUpdateComplete);
+                Logging.WriteEntry($"UserID API mapping succeeded\nUsername: {e.Username}\nIP address: {framedIP.ValueAsString}\nType: {type}", EventLogEntryType.Information, Logging.EventIDUserIDUpdateComplete);
             }
             catch (PanApiException ex)
             {
-                Logging.WriteEntry($"The UserID API called failed\nUsername: {username.ValueAsString}\nIP address: {framedIP.ValueAsString}\n{ex.Message}\n{ex.StackTrace}\n{ex.Detail}", EventLogEntryType.Error, Logging.EventIDApiException);
+                Logging.WriteEntry($"The UserID API called failed\nUsername: {e.Username}\nIP address: {framedIP.ValueAsString}\n{ex}", EventLogEntryType.Error, Logging.EventIDApiException);
             }
             catch (Exception ex)
             {
-                Logging.WriteEntry($"An error occured while submitting the user-id update\nUsername: {username.ValueAsString}\nIP address: {framedIP.ValueAsString}\n{ex.Message}\n{ex.StackTrace}", EventLogEntryType.Error, Logging.EventIDMessageSendException);
+                Logging.WriteEntry($"An error occurred while submitting the user-id update\nUsername: {e.Username}\nIP address: {framedIP.ValueAsString}\n{ex}", EventLogEntryType.Error, Logging.EventIDMessageSendException);
             }
         }
 
@@ -222,7 +222,7 @@ namespace Lithnet.Pan.RAProxy
                 {
                     List<AccountingRequest> batchedRequests = new List<AccountingRequest>();
 
-                    // Keep processing until the task is cancelled
+                    // Keep processing until the task is canceled
                     while (!Program.cancellationToken.IsCancellationRequested)
                     {
                         // Batch all messages received
@@ -241,7 +241,7 @@ namespace Lithnet.Pan.RAProxy
 
                                 // Debug info
                                 Trace.WriteLine($"Incoming accounting request dequeued\n{nextRequest}");
-                                Trace.WriteLine($"Request queue lenth: {Program.incomingRequests.Count}");
+                                Trace.WriteLine($"Request queue length: {Program.incomingRequests.Count}");
                             }
                             else
                             {
@@ -259,7 +259,7 @@ namespace Lithnet.Pan.RAProxy
                             }
                             catch (Exception ex)
                             {
-                                Logging.WriteEntry($"An error occured while submitting the user-id update\n{ex.Message}\n{ex.StackTrace}", EventLogEntryType.Error, Logging.EventIDMessageSendException);
+                                Logging.WriteEntry($"An error occurred while submitting the user-id update\n{ex.Message}\n{ex.StackTrace}", EventLogEntryType.Error, Logging.EventIDMessageSendException);
                             }
                             finally
                             {
@@ -308,7 +308,7 @@ namespace Lithnet.Pan.RAProxy
 
                     Entry e = new Entry
                     {
-                        Username = request.Attributes.FirstOrDefault(t => t.Type == RadiusAttribute.RadiusAttributeType.UserName)?.ValueAsString,
+                        Username = Config.MatchReplace(request.Attributes.FirstOrDefault(t => t.Type == RadiusAttribute.RadiusAttributeType.UserName)?.ValueAsString),
                         IpAddress = request.Attributes.FirstOrDefault(t => t.Type == RadiusAttribute.RadiusAttributeType.FramedIPAddress)?.ValueAsString
                     };
 
@@ -320,7 +320,7 @@ namespace Lithnet.Pan.RAProxy
 
                             if (message.Payload.Logout.Entries.Remove(e))
                             {
-                                Trace.WriteLine($"Removed logout entry superceeded by login entry {e.Username}:{e.IpAddress}");
+                                Trace.WriteLine($"Removed logout entry superseded by login entry {e.Username}:{e.IpAddress}");
                             }
 
                             break;
@@ -354,6 +354,16 @@ namespace Lithnet.Pan.RAProxy
                 }
 
                 Trace.WriteLine($"Sending batch of {sending}");
+                if (message.Payload.Login.Entries.Count > 0)
+                {
+                    Trace.WriteLine($"Logins:\n{string.Join("\n", message.Payload.Login.Entries.Select(t => t.Username))}");
+                }
+
+                if (message.Payload.Logout.Entries.Count > 0)
+                {
+                    Trace.WriteLine($"Logouts:\n{string.Join("\n", message.Payload.Logout.Entries.Select(t => t.Username))}");
+                }
+                
                 message.Send();
                 Logging.CounterSentPerSecond.IncrementBy(sending);
                 Logging.CounterSentLoginsPerSecond.IncrementBy(message.Payload.Login.Entries.Count);
@@ -374,7 +384,7 @@ namespace Lithnet.Pan.RAProxy
             }
             catch (Exception ex)
             {
-                Logging.WriteEntry($"An error occured while submitting the user-id update\n{ex.Message}\n{ex.StackTrace}", EventLogEntryType.Error, Logging.EventIDMessageSendException);
+                Logging.WriteEntry($"An error occurred while submitting the user-id update\n{ex.Message}\n{ex.StackTrace}", EventLogEntryType.Error, Logging.EventIDMessageSendException);
             }
         }
     }

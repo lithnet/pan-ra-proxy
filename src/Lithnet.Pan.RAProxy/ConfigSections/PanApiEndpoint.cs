@@ -32,5 +32,19 @@ namespace Lithnet.Pan.RAProxy
                 this["api-key"] = value;
             }
         }
+
+        [ConfigurationProperty("url-encode-key", IsRequired = false, DefaultValue = false)]
+        public bool UrlEncodeKey
+        {
+            get
+            {
+                return (bool)this["url-encode-key"];
+            }
+
+            set
+            {
+                this["url-encode-key"] = value;
+            }
+        }
     }
 }

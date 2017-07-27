@@ -48,8 +48,10 @@
   <ItemGroup>
     <Compile Include="ConfigSections\PanApiEndpoint.cs" />
     <Compile Include="ConfigSections\PanApiCollection.cs" />
+    <Compile Include="ConfigSections\UsernameRewriteCollection.cs" />
     <Compile Include="ConfigSections\RadiusServerCollection.cs" />
     <Compile Include="ConfigSections\RadiusClientSection.cs" />
+    <Compile Include="ConfigSections\UsernameRewriteSection.cs" />
     <Compile Include="ConfigSections\RadiusServerSection.cs" />
     <Compile Include="Exceptions\MissingValueException.cs" />
     <Compile Include="Exceptions\InvalidRadiusAttributeException.cs" />

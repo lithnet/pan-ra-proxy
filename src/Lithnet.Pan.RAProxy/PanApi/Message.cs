@@ -6,7 +6,6 @@ using System.Net;
 using System.Collections.Specialized;
 using System.Web;
 using System.Diagnostics;
-using System.Net.Sockets;
 using System.Xml;
 
 namespace Lithnet.Pan.RAProxy
@@ -179,7 +178,7 @@ namespace Lithnet.Pan.RAProxy
                     throw;
                 }
 
-                Logging.WriteEntry($"The attempt to send the update to endpoint {ep.ApiUri} failed with a communciations error\n{ex.Message}\n{ex.Source}\nThe service will attempt to fail over to the next endpoint", EventLogEntryType.Warning, Logging.EventIDApiEndpointExceptionWillFailover);
+                Logging.WriteEntry($"The attempt to send the update to endpoint {ep.ApiUri} failed with a communications error\n{ex}\nThe service will attempt to fail over to the next endpoint", EventLogEntryType.Warning, Logging.EventIDApiEndpointExceptionWillFailover);
                 Config.Failover();
                 return this.Submit();
             }
@@ -193,7 +192,15 @@ namespace Lithnet.Pan.RAProxy
 
             NameValueCollection queryString = HttpUtility.ParseQueryString(string.Empty);
 
-            queryString["key"] = HttpUtility.UrlEncode(ep.ApiKey);
+            if (Config.ActiveEndPoint.UrlEncodeKey)
+            {
+                queryString["key"] = HttpUtility.UrlEncode(ep.ApiKey);
+            }
+            else
+            {
+                queryString["key"] = ep.ApiKey;
+            }
+
             queryString["type"] = this.ApiType;
 
             builder.Query = queryString.ToString();

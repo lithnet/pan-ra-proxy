@@ -77,7 +77,7 @@ namespace Lithnet.Pan.RAProxy
         public static int BatchSize => Config.section.PanApi.BatchSize;
 
         public static int BatchWait => Config.section.PanApi.BatchWait;
-        
+
         private static Regex UsernameFilterRegex
         {
             get
@@ -127,6 +127,21 @@ namespace Lithnet.Pan.RAProxy
             Logging.WriteEntry($"A RADIUS message was received from an unknown source {address} and was discarded", EventLogEntryType.Error, Logging.EventIDUnknownRadiusHost);
 
             return null;
+        }
+
+        internal static string MatchReplace(string username)
+        {
+            string newUsername = username;
+
+            if (Config.section.UsernameRewrites != null)
+            {
+                foreach (UsernameRewriteSection rule in Config.section.UsernameRewrites)
+                {
+                    newUsername = rule.Rewrite(newUsername);
+                }
+            }
+
+            return newUsername;
         }
     }
 }
