@@ -112,13 +112,13 @@ namespace Lithnet.Pan.RAProxy
 
         /// <summary>
         /// Handle a received AccountingRequest packet, passing any attributes to the necessary
-        /// recording function and creating an acknowledgement response if the request was
+        /// recording function and creating an acknowledgment response if the request was
         /// valid. If the request cannot be parsed or fails authentication, no response will
         /// be returned
         /// </summary>
         /// <param name="data">Incoming data packet</param>
         /// <param name="sender">Source IP address</param>
-        /// <returns>Acknowledgement response data, if successfully parsed</returns>
+        /// <returns>Acknowledgment response data, if successfully parsed</returns>
         private static byte[] ParseRequestMessage(byte[] data, IPAddress sender)
         {
             byte requestType = data[0]; // Type code is first 8 bits, 4 = AccountingRequest, 5 = AccountingResponse
@@ -179,7 +179,7 @@ namespace Lithnet.Pan.RAProxy
             // Send the attributes array on to the necessary interface
             Program.AddToQueue(new AccountingRequest(sender, attributes));
 
-            // Send a response acknowledgement
+            // Send a response acknowledgment
             byte[] responsePacket = new byte[responseAttributes.Count + 20];
 
             // First populate any attributes into the response, since their length is known

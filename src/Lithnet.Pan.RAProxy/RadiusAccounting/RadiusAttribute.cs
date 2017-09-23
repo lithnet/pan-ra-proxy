@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Lithnet.Pan.RAProxy
 {
@@ -94,25 +92,29 @@ namespace Lithnet.Pan.RAProxy
                     newAttribute.ValueAsByteArray = value;
                     switch (datatype)
                     {
-                        case RadiusAttributeValueDatatype.ByteArray:
-                            newAttribute.Value = value;
-                            newAttribute.ValueAsString = Convert.ToBase64String(value);
-                            break;
                         case RadiusAttributeValueDatatype.String:
                         case RadiusAttributeValueDatatype.EncryptedString:
                             newAttribute.Value = Encoding.ASCII.GetString(value);
                             newAttribute.ValueAsString = (string)newAttribute.Value;
                             break;
+
                         case RadiusAttributeValueDatatype.Integer:
                             Array.Reverse(value);
                             newAttribute.Value = BitConverter.ToUInt32(value, 0);
                             newAttribute.ValueAsInt = BitConverter.ToUInt32(value, 0);
                             newAttribute.ValueAsString = newAttribute.ValueAsInt.ToString();
                             break;
+
                         case RadiusAttributeValueDatatype.IP:
                             newAttribute.Value = new IPAddress(value);
                             newAttribute.ValueAsIPAddress = (IPAddress)newAttribute.Value;
                             newAttribute.ValueAsString = newAttribute.ValueAsIPAddress.ToString();
+                            break;
+
+                        case RadiusAttributeValueDatatype.ByteArray:
+                        default:
+                            newAttribute.Value = value;
+                            newAttribute.ValueAsString = Convert.ToBase64String(value);
                             break;
                     }
                 }
@@ -324,6 +326,8 @@ namespace Lithnet.Pan.RAProxy
                     return RadiusAttributeValueDatatype.Integer;
                 case RadiusAttributeType.LoginLATPort:
                     return RadiusAttributeValueDatatype.String;
+                case RadiusAttributeType.FramedIPv6Address:
+                    return RadiusAttributeValueDatatype.IP;
                 default:
                     return RadiusAttributeValueDatatype.ByteArray;
             }
@@ -439,6 +443,8 @@ namespace Lithnet.Pan.RAProxy
                     return "Port-Limit";
                 case RadiusAttributeType.LoginLATPort:
                     return "Login-LAT-Port";
+                case RadiusAttributeType.FramedIPv6Address:
+                    return "Framed-IPv6-Address";
                 default:
                     return type.ToString();
             }
@@ -514,6 +520,7 @@ namespace Lithnet.Pan.RAProxy
             NASPortType = 61,
             PortLimit = 62,
             LoginLATPort = 63,
+            FramedIPv6Address = 168
         }
     }
 }

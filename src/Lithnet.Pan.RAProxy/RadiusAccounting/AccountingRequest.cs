@@ -1,14 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Collections.ObjectModel;
+using System.Net;
 
 namespace Lithnet.Pan.RAProxy.RadiusAccounting
 {
-    using System.Collections.ObjectModel;
-    using System.Net;
-
     public class AccountingRequest
     {
         public IPAddress IPAddress { get; private set; }
@@ -30,18 +27,12 @@ namespace Lithnet.Pan.RAProxy.RadiusAccounting
 
         public void Validate()
         {
-            RadiusAttribute accountingType = Attributes.FirstOrDefault(t => t.Type == RadiusAttribute.RadiusAttributeType.AcctStatusType);
-            RadiusAttribute framedIP = Attributes.FirstOrDefault(t => t.Type == RadiusAttribute.RadiusAttributeType.FramedIPAddress);
-            RadiusAttribute username = Attributes.FirstOrDefault(t => t.Type == RadiusAttribute.RadiusAttributeType.UserName);
+            RadiusAttribute accountingType = this.Attributes.FirstOrDefault(t => t.Type == RadiusAttribute.RadiusAttributeType.AcctStatusType);
+            RadiusAttribute username = this.Attributes.FirstOrDefault(t => t.Type == RadiusAttribute.RadiusAttributeType.UserName);
 
             if (accountingType == null)
             {
                 throw new MissingValueException("The Acct-Status-Type attribute was not present");
-            }
-
-            if (framedIP == null)
-            {
-                throw new MissingValueException("The Framed-IP-Address attribute was not present");
             }
 
             if (username == null)

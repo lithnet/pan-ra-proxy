@@ -305,29 +305,77 @@ namespace Lithnet.Pan.RAProxy
                 {
                     // Try to throw any missing values as exceptions
                     request.Validate();
+                    List<Entry> items = new List<Entry>();
 
-                    Entry e = new Entry
+                    string username = Config.MatchReplace(request.Attributes.FirstOrDefault(t => t.Type == RadiusAttribute.RadiusAttributeType.UserName)?.ValueAsString);
+
+                    foreach (RadiusAttribute v4Address in request.Attributes.Where(t => t.Type == RadiusAttribute.RadiusAttributeType.FramedIPAddress))
                     {
-                        Username = Config.MatchReplace(request.Attributes.FirstOrDefault(t => t.Type == RadiusAttribute.RadiusAttributeType.UserName)?.ValueAsString),
-                        IpAddress = request.Attributes.FirstOrDefault(t => t.Type == RadiusAttribute.RadiusAttributeType.FramedIPAddress)?.ValueAsString
-                    };
+                        Entry e = new Entry
+                        {
+                            Username = username,
+                            IpAddress = v4Address.ValueAsString
+                        };
 
-                    switch (request.Attributes.FirstOrDefault(t => t.Type == RadiusAttribute.RadiusAttributeType.AcctStatusType)?.ValueAsInt)
+                        items.Add(e);
+                    }
+
+                    foreach (RadiusAttribute v6Address in request.Attributes.Where(t => t.Type == RadiusAttribute.RadiusAttributeType.FramedIPv6Address))
+                    {
+                        Entry e = new Entry
+                        {
+                            Username = username,
+                            IpAddress = v6Address.ValueAsString
+                        };
+
+                        items.Add(e);
+                    }
+
+                    if (items.Count == 0)
+                    {
+                        Logging.CounterIgnoredPerSecond.Increment();
+                        Logging.WriteDebugEntry($"A radius accounting packet was discarded because it did not contain any IP address entries", EventLogEntryType.Warning, Logging.EventIDInvalidRadiusPacket);
+                        continue;
+                    }
+
+                    uint requestType = request.Attributes.FirstOrDefault(t => t.Type == RadiusAttribute.RadiusAttributeType.AcctStatusType).ValueAsInt;
+
+                    switch (requestType)
                     {
                         case 1:
-                            // Accounting start
-                            message.Payload.Login.Entries.Add(e);
-
-                            if (message.Payload.Logout.Entries.Remove(e))
+                        case 3:
+                            string type;
+                            if (requestType == 3)
                             {
-                                Trace.WriteLine($"Removed logout entry superseded by login entry {e.Username}:{e.IpAddress}");
+                                type = "interim update";
+                            }
+                            else
+                            {
+                                type = "accounting start";
                             }
 
+                            foreach (Entry e in items)
+                            {
+                                Trace.WriteLine($"Added login entry {e.Username}:{e.IpAddress} from {type}");
+                                message.Payload.Login.Entries.Add(e);
+
+                                if (message.Payload.Logout.Entries.Remove(e))
+                                {
+                                    Trace.WriteLine($"Removed logout entry superseded by login entry {e.Username}:{e.IpAddress}");
+                                }
+                            }
+                            
                             break;
 
                         case 2:
                             // Accounting stop
-                            message.Payload.Logout.Entries.Add(e);
+
+                            foreach (Entry e in items)
+                            {
+                                message.Payload.Logout.Entries.Add(e);
+                                Trace.WriteLine($"Added logout entry {e.Username}:{e.IpAddress}");
+                            }
+
                             break;
 
                         default:
@@ -363,7 +411,7 @@ namespace Lithnet.Pan.RAProxy
                 {
                     Trace.WriteLine($"Logouts:\n{string.Join("\n", message.Payload.Logout.Entries.Select(t => t.Username))}");
                 }
-                
+
                 message.Send();
                 Logging.CounterSentPerSecond.IncrementBy(sending);
                 Logging.CounterSentLoginsPerSecond.IncrementBy(message.Payload.Login.Entries.Count);
