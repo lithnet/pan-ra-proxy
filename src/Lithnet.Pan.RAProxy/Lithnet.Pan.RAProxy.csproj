@@ -61,6 +61,7 @@
     <Compile Include="Extensions.cs" />
     <Compile Include="Exceptions\PanApiException.cs" />
     <Compile Include="Logging.cs" />
+    <Compile Include="MessageQueue.cs" />
     <Compile Include="RadiusAccounting\AccountingListener.cs" />
     <Compile Include="PanApi\Entry.cs" />
     <Compile Include="PanApi\Logout.cs" />
@@ -80,6 +81,8 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PanApi\UidMessage.cs" />
     <Compile Include="ConfigSections\Config.cs" />
+    <Compile Include="WinApi\ExtendedNameFormat.cs" />
+    <Compile Include="WinApi\NativeMethods.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

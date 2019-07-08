@@ -72,6 +72,13 @@ namespace Lithnet.Pan.RAProxy
             this.BaseClear();
         }
 
+        [ConfigurationProperty("output-format", IsRequired = false)]
+        public string OutputFormat
+        {
+            get => (string)base["output-format"];
+            set => base["output-format"] = value;
+        }
+
         protected override string ElementName => "username-rewrite";
     }
 }

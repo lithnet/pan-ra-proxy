@@ -143,5 +143,7 @@ namespace Lithnet.Pan.RAProxy
 
             return newUsername;
         }
+
+        internal static string UsernameTranslationType => Config.section.UsernameRewrites.OutputFormat;
     }
 }

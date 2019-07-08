@@ -7,6 +7,11 @@ namespace Lithnet.Pan.RAProxy
         // Warnings
         public const int EventIDServerCertificateValidationDisabled = 2001;
 
+        // Name translation warnings
+        public const int EventIDCouldNotMapNameNotFound = 2101;
+        public const int EventIDCouldNotMapDomainNotFound = 2102;
+        public const int EventIDCouldNotMapUnknown = 2199;
+
         // Api Errors
         public const int EventIDApiException = 3001;
         public const int EventIDUnknownApiException = 3002;
@@ -16,8 +21,7 @@ namespace Lithnet.Pan.RAProxy
         public const int EventIDApiEndpointFailover = 3006;
         public const int EventIDApiUserIDMappingLoginFailed= 3007;
         public const int EventIDApiUserIDMappingLogoutFailed = 3008;
-
-
+        
         // Accounting Errors
         public const int EventIDUnknownRadiusHost = 3101;
         public const int EventIDMissingAttribute = 3102;

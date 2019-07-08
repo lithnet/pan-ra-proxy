@@ -14,21 +14,22 @@ namespace Lithnet.Pan.RAProxy
 {
     internal class AccountingListener
     {
+        private MessageQueue messageQueue;
 
         public int Port { get; set; }
 
-        public AccountingListener()
+        public AccountingListener(MessageQueue messageQueue)
+        : this(messageQueue, 1813)
         {
-            this.Port = 1813;
         }
 
         /// <summary>
         /// Instantiate the listener service on the designated host and port
         /// </summary>
-        public AccountingListener(int usePort = 1813)
+        public AccountingListener(MessageQueue messageQueue, int port)
         {
-            this.Port = usePort;
-
+            this.messageQueue = messageQueue;
+            this.Port = port;
         }
 
         public void Start(CancellationToken token)
@@ -49,7 +50,7 @@ namespace Lithnet.Pan.RAProxy
                             // If this is a valid sized RADIUS packet, try to parse, otherwise silently ignore
                             if (receiveResult.Buffer?.Length >= 20)
                             {
-                                byte[] response = ParseRequestMessage(receiveResult.Buffer, receiveResult.RemoteEndPoint.Address);
+                                byte[] response = this.ParseRequestMessage(receiveResult.Buffer, receiveResult.RemoteEndPoint.Address);
 
                                 if (response?.Length > 0)
                                 {
@@ -119,7 +120,7 @@ namespace Lithnet.Pan.RAProxy
         /// <param name="data">Incoming data packet</param>
         /// <param name="sender">Source IP address</param>
         /// <returns>Acknowledgment response data, if successfully parsed</returns>
-        private static byte[] ParseRequestMessage(byte[] data, IPAddress sender)
+        private byte[] ParseRequestMessage(byte[] data, IPAddress sender)
         {
             byte requestType = data[0]; // Type code is first 8 bits, 4 = AccountingRequest, 5 = AccountingResponse
             byte requestIdentifier = data[1]; // Identifier is next 8 bits, representing sequence of message
@@ -177,7 +178,7 @@ namespace Lithnet.Pan.RAProxy
             }
 
             // Send the attributes array on to the necessary interface
-            Program.AddToQueue(new AccountingRequest(sender, attributes));
+            this.messageQueue.AddToQueue(new AccountingRequest(sender, attributes));
 
             // Send a response acknowledgment
             byte[] responsePacket = new byte[responseAttributes.Count + 20];
