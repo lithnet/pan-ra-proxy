@@ -141,6 +141,13 @@ namespace Lithnet.Pan.RAProxy
 
                     string username = this.GetTranslatedUsername(request);
 
+                    if (Config.IsUsernameFilterMatch(username))
+                    {
+                        Logging.CounterIgnoredPerSecond.Increment();
+                        Logging.WriteDebugEntry($"A radius accounting packet was discarded the username matched the regex filter", EventLogEntryType.Warning, Logging.EventIDFilteredUsernameDropped);
+                        continue;
+                    }
+
                     foreach (RadiusAttribute v4Address in request.Attributes.Where(t => t.Type == RadiusAttribute.RadiusAttributeType.FramedIPAddress))
                     {
                         Entry e = new Entry
