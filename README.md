@@ -13,6 +13,11 @@ Download the installer from the [releases page](https://github.com/lithnet/pan-r
 
 Read the [getting started guide](https://github.com/lithnet/pan-ra-proxy/wiki/)
 
+## How can I contribute to the project?
+* Found an issue and want us to fix it? [Log it](https://github.com/lithnet/ran-ra-proxy/issues)
+* Want to fix an issue yourself or add functionality? Clone the project and submit a pull request
+* Make a [donation](https://lithnet.io/donate) and help us cover our costs
+
 ## Keep up to date
 * [Visit my blog](http://blog.lithiumblue.com)
 * [Follow me on twitter](https://twitter.com/RyanLNewington)![](http://twitter.com/favicon.ico)
