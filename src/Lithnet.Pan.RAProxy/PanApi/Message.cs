@@ -23,6 +23,12 @@ namespace Lithnet.Pan.RAProxy
             try
             {
                 response = this.Submit();
+#if DEBUG
+                Trace.WriteLine("-----------------");
+                Trace.WriteLine("XML Response");
+                Trace.WriteLine(response);
+                Trace.WriteLine("-----------------");
+#endif
             }
             catch (Exception ex)
             {
@@ -72,6 +78,13 @@ namespace Lithnet.Pan.RAProxy
                             Logging.WriteEntry($"The login user mapping for {ex.Username} with ip {ex.IPAddress} failed with message '{ex.Message}'", EventLogEntryType.Error, Logging.EventIDApiUserIDMappingLoginFailed);
                         }
                     }
+
+                    XmlNode node = d.SelectSingleNode("/response/result/msg");
+
+                    if (node != null)
+                    {
+                        throw new PanApiException($"The API call failed with the following message\r\n {node.InnerText}");
+                    }
                 }
 
                 if (exceptions.Count == 1)
@@ -83,6 +96,8 @@ namespace Lithnet.Pan.RAProxy
                 {
                     throw new AggregateUserMappingException("Multiple user mapping operations failed", exceptions);
                 }
+
+                throw new PanApiException($"The API call failed with an unknown response\r\n{response}");
             }
             catch (AggregateException)
             {
@@ -146,6 +161,8 @@ namespace Lithnet.Pan.RAProxy
 
         /*\
 
+                //<response status = 'error' code = '403'><result><msg>Invalid Credential</msg></result>
+
              <response status="error">
                  <msg>
                   <line>
@@ -208,8 +225,13 @@ namespace Lithnet.Pan.RAProxy
             HttpWebRequest request = this.GetRequestContent(builder.Uri, messageText);
             request.ServicePoint.Expect100Continue = false;
 
-            using (WebResponse response = request.GetResponse())
+            using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
             {
+                if (response.StatusCode != HttpStatusCode.OK)
+                {
+                    throw new HttpException((int) response.StatusCode, "The API call failed");
+                }
+                
                 using (Stream stream = response.GetResponseStream())
                 {
                     StreamReader reader = new StreamReader(stream);
@@ -238,6 +260,13 @@ namespace Lithnet.Pan.RAProxy
             builder.AppendLine(fileContent);
             builder.AppendLine("--" + boundary + "--");
 
+#if DEBUG
+            Trace.WriteLine("-----------------");
+            Trace.WriteLine("XML Request");
+            Trace.WriteLine(builder.ToString());
+            Trace.WriteLine("-----------------");
+
+#endif
             using (Stream rs = request.GetRequestStream())
             {
                 byte[] bytes = Encoding.UTF8.GetBytes(builder.ToString());
