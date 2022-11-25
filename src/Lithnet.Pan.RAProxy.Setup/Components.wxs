@@ -6,7 +6,7 @@
     <DirectoryRef Id="APPROOTDIR">
       <Component Id="EventSource" Guid="*" Win64="yes" >
         <Util:EventSource xmlns:Util="http://schemas.microsoft.com/wix/UtilExtension"
-                    Name="PanRAProxy" Log="Application" EventMessageFile="[NETFRAMEWORK46FULLINSTALLROOTDIR64]EventLogMessages.dll" KeyPath="yes"/>
+                    Name="PanRAProxy" Log="Application" EventMessageFile="[NETFRAMEWORK40FULLINSTALLROOTDIR64]EventLogMessages.dll" KeyPath="yes"/>
       </Component>
 
       <Component Id="cmp735b70a6e0614eb5b495a21ef8641146" Guid="*" Win64="yes">
@@ -25,11 +25,11 @@
         <ServiceControl Id="ServiceControlEvents" Name="[SERVICE_NAME]" Start="install" Stop="both" Remove="uninstall" Wait="yes"/>
         <util:PerformanceCategory Id="PerformanceCounter" Name="PANRAProxy" DefaultLanguage="english">
           <util:PerformanceCounter Name="Requests in queue" Type="numberOfItems32"  Help="Shows the number of requests in the queue that are waiting to be sent to the firewall"/>
-          <util:PerformanceCounter Name="Accounting requests received / second" Type="rateOfCountsPerSecond32" Help="Shows the number of accounting requests receieved per second"/>
+          <util:PerformanceCounter Name="Accounting requests received / second" Type="rateOfCountsPerSecond32" Help="Shows the number of accounting requests received per second"/>
           <util:PerformanceCounter Name="Accounting requests discarded / second" Type="rateOfCountsPerSecond32" Help="Shows the number of accounting requests discarded per second"/>
-          <util:PerformanceCounter Name="Accounting start requests received / second" Type="rateOfCountsPerSecond32" Help="Shows the number of accounting start requests receieved per second"/>
-          <util:PerformanceCounter Name="Accounting stop requests received / second" Type="rateOfCountsPerSecond32" Help="Shows the number of accounting stop requests receieved per second"/>
-          <util:PerformanceCounter Name="Accounting other requests received / second" Type="rateOfCountsPerSecond32" Help="Shows the number of other accounting requests receieved per second"/>
+          <util:PerformanceCounter Name="Accounting start requests received / second" Type="rateOfCountsPerSecond32" Help="Shows the number of accounting start requests received per second"/>
+          <util:PerformanceCounter Name="Accounting stop requests received / second" Type="rateOfCountsPerSecond32" Help="Shows the number of accounting stop requests received per second"/>
+          <util:PerformanceCounter Name="Accounting other requests received / second" Type="rateOfCountsPerSecond32" Help="Shows the number of other accounting requests received per second"/>
           <util:PerformanceCounter Name="Requests sent / second" Type="rateOfCountsPerSecond32" Help="Shows the number of account requests sent per second"/>
           <util:PerformanceCounter Name="Failed mappings / second" Type="rateOfCountsPerSecond32" Help="Shows the number of failed user-id mappings per second"/>
           <util:PerformanceCounter Name="Requests ignored / second" Type="rateOfCountsPerSecond32" Help="Shows the number of requests that were ignored because they were incomplete"/>

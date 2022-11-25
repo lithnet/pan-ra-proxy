@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.ServiceProcess;
-using System.Threading.Tasks;
-using System.Diagnostics;
-using System.Threading;
-using System.Collections.Concurrent;
+﻿using System.Diagnostics;
 using System.Net;
-using Lithnet.Pan.RAProxy.RadiusAccounting;
+using System.ServiceProcess;
+using System.Threading;
 
 namespace Lithnet.Pan.RAProxy
 {
@@ -55,6 +49,8 @@ namespace Lithnet.Pan.RAProxy
                 ServicePointManager.ServerCertificateValidationCallback += (sender, certificate, chain, errors) => true;
                 Logging.WriteEntry("Server certificate validation has been disabled. The SSL certificate on the Palo Alto device will not be validated", EventLogEntryType.Warning, Logging.EventIDServerCertificateValidationDisabled);
             }
+
+            Trace.WriteLine("Initializing application");
 
             Program.messageQueue = new MessageQueue();
             Program.messageQueue.Start(Program.cancellationToken.Token);
