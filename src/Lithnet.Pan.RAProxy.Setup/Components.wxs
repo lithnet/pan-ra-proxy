@@ -2,55 +2,56 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
      xmlns:util='http://schemas.microsoft.com/wix/UtilExtension'
    xmlns:http='http://schemas.microsoft.com/wix/HttpExtension'>
-  <Fragment>
-    <DirectoryRef Id="APPROOTDIR">
-      <Component Id="EventSource" Guid="*" Win64="yes" >
-        <Util:EventSource xmlns:Util="http://schemas.microsoft.com/wix/UtilExtension"
-                    Name="PanRAProxy" Log="Application" EventMessageFile="[NETFRAMEWORK40FULLINSTALLROOTDIR64]EventLogMessages.dll" KeyPath="yes"/>
-      </Component>
+	<Fragment>
+		<PropertyRef Id="NETFRAMEWORK40FULLINSTALLROOTDIR64"/>
+		<DirectoryRef Id="APPROOTDIR">
+			<Component Id="EventSource" Guid="*" Win64="yes" >
+				<Util:EventSource xmlns:Util="http://schemas.microsoft.com/wix/UtilExtension"
+							Name="PanRAProxy" Log="Application" EventMessageFile="[NETFRAMEWORK40FULLINSTALLROOTDIR64]EventLogMessages.dll" KeyPath="yes"/>
+			</Component>
 
-      <Component Id="cmp735b70a6e0614eb5b495a21ef8641146" Guid="*" Win64="yes">
-        <File Id="fil6ae07342fce0489b90e51d06cdc17684" KeyPath="yes" Source="$(var.Lithnet.Pan.RAProxy.TargetDir)\Lithnet.Pan.RAProxy.exe" />
-        <ServiceInstall Id="panraproxy"
-                        DisplayName="Lithnet PAN RA Proxy"
-                        Account="NT AUTHORITY\NETWORKSERVICE"
-                        Name="[SERVICE_NAME]"
-                        ErrorControl="normal"
-                        Start="auto"
-                        Type="ownProcess"
-                        Description="Forwards RADIUS accounting requests to a Palo Alto firewall as User-ID updates"
-                        Vital="yes"
-                        Interactive="no">
-        </ServiceInstall>
-        <ServiceControl Id="ServiceControlEvents" Name="[SERVICE_NAME]" Start="install" Stop="both" Remove="uninstall" Wait="yes"/>
-        <util:PerformanceCategory Id="PerformanceCounter" Name="PANRAProxy" DefaultLanguage="english">
-          <util:PerformanceCounter Name="Requests in queue" Type="numberOfItems32"  Help="Shows the number of requests in the queue that are waiting to be sent to the firewall"/>
-          <util:PerformanceCounter Name="Accounting requests received / second" Type="rateOfCountsPerSecond32" Help="Shows the number of accounting requests received per second"/>
-          <util:PerformanceCounter Name="Accounting requests discarded / second" Type="rateOfCountsPerSecond32" Help="Shows the number of accounting requests discarded per second"/>
-          <util:PerformanceCounter Name="Accounting start requests received / second" Type="rateOfCountsPerSecond32" Help="Shows the number of accounting start requests received per second"/>
-          <util:PerformanceCounter Name="Accounting stop requests received / second" Type="rateOfCountsPerSecond32" Help="Shows the number of accounting stop requests received per second"/>
-          <util:PerformanceCounter Name="Accounting other requests received / second" Type="rateOfCountsPerSecond32" Help="Shows the number of other accounting requests received per second"/>
-          <util:PerformanceCounter Name="Requests sent / second" Type="rateOfCountsPerSecond32" Help="Shows the number of account requests sent per second"/>
-          <util:PerformanceCounter Name="Failed mappings / second" Type="rateOfCountsPerSecond32" Help="Shows the number of failed user-id mappings per second"/>
-          <util:PerformanceCounter Name="Requests ignored / second" Type="rateOfCountsPerSecond32" Help="Shows the number of requests that were ignored because they were incomplete"/>
-          <util:PerformanceCounter Name="Requests sent login / second" Type="rateOfCountsPerSecond32" Help="Shows the number of login mappings sent per second"/>
-          <util:PerformanceCounter Name="Requests sent logout / second" Type="rateOfCountsPerSecond32" Help="Shows the number of logout mappings sent per second"/>
+			<Component Id="cmp735b70a6e0614eb5b495a21ef8641146" Guid="*" Win64="yes">
+				<File Id="fil6ae07342fce0489b90e51d06cdc17684" KeyPath="yes" Source="$(var.Lithnet.Pan.RAProxy.TargetDir)\Lithnet.Pan.RAProxy.exe" />
+				<ServiceInstall Id="panraproxy"
+								DisplayName="Lithnet PAN RA Proxy"
+								Account="NT AUTHORITY\NETWORKSERVICE"
+								Name="[SERVICE_NAME]"
+								ErrorControl="normal"
+								Start="auto"
+								Type="ownProcess"
+								Description="Forwards RADIUS accounting requests to a Palo Alto firewall as User-ID updates"
+								Vital="yes"
+								Interactive="no">
+				</ServiceInstall>
+				<ServiceControl Id="ServiceControlEvents" Name="[SERVICE_NAME]" Start="install" Stop="both" Remove="uninstall" Wait="yes"/>
+				<util:PerformanceCategory Id="PerformanceCounter" Name="PANRAProxy" DefaultLanguage="english">
+					<util:PerformanceCounter Name="Requests in queue" Type="numberOfItems32"  Help="Shows the number of requests in the queue that are waiting to be sent to the firewall"/>
+					<util:PerformanceCounter Name="Accounting requests received / second" Type="rateOfCountsPerSecond32" Help="Shows the number of accounting requests received per second"/>
+					<util:PerformanceCounter Name="Accounting requests discarded / second" Type="rateOfCountsPerSecond32" Help="Shows the number of accounting requests discarded per second"/>
+					<util:PerformanceCounter Name="Accounting start requests received / second" Type="rateOfCountsPerSecond32" Help="Shows the number of accounting start requests received per second"/>
+					<util:PerformanceCounter Name="Accounting stop requests received / second" Type="rateOfCountsPerSecond32" Help="Shows the number of accounting stop requests received per second"/>
+					<util:PerformanceCounter Name="Accounting other requests received / second" Type="rateOfCountsPerSecond32" Help="Shows the number of other accounting requests received per second"/>
+					<util:PerformanceCounter Name="Requests sent / second" Type="rateOfCountsPerSecond32" Help="Shows the number of account requests sent per second"/>
+					<util:PerformanceCounter Name="Failed mappings / second" Type="rateOfCountsPerSecond32" Help="Shows the number of failed user-id mappings per second"/>
+					<util:PerformanceCounter Name="Requests ignored / second" Type="rateOfCountsPerSecond32" Help="Shows the number of requests that were ignored because they were incomplete"/>
+					<util:PerformanceCounter Name="Requests sent login / second" Type="rateOfCountsPerSecond32" Help="Shows the number of login mappings sent per second"/>
+					<util:PerformanceCounter Name="Requests sent logout / second" Type="rateOfCountsPerSecond32" Help="Shows the number of logout mappings sent per second"/>
 
-        </util:PerformanceCategory>
-      </Component>
-
-      
-      <Component Id="cmpb69520521cbba41ac82adecb1ef714866" Guid="*" NeverOverwrite="yes" Win64="yes">
-        <File Id="App.config" KeyPath="yes" Source="$(var.Lithnet.Pan.RAProxy.TargetDir)Lithnet.Pan.RAProxy.exe.config" />
-      </Component>
-
-    </DirectoryRef>
+				</util:PerformanceCategory>
+			</Component>
 
 
-    <ComponentGroup Id="Binaries">
-      <ComponentRef Id="EventSource"/>
-      <ComponentRef Id="cmp735b70a6e0614eb5b495a21ef8641146"/>
-      <ComponentRef Id="cmpb69520521cbba41ac82adecb1ef714866"/>
-    </ComponentGroup>
-  </Fragment>
+			<Component Id="cmpb69520521cbba41ac82adecb1ef714866" Guid="*" NeverOverwrite="yes" Win64="yes">
+				<File Id="App.config" KeyPath="yes" Source="$(var.Lithnet.Pan.RAProxy.TargetDir)Lithnet.Pan.RAProxy.exe.config" />
+			</Component>
+
+		</DirectoryRef>
+
+
+		<ComponentGroup Id="Binaries">
+			<ComponentRef Id="EventSource"/>
+			<ComponentRef Id="cmp735b70a6e0614eb5b495a21ef8641146"/>
+			<ComponentRef Id="cmpb69520521cbba41ac82adecb1ef714866"/>
+		</ComponentGroup>
+	</Fragment>
 </Wix>
