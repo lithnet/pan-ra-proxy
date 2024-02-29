@@ -60,13 +60,17 @@ namespace Lithnet.Pan.RAProxy
 
         public PanApiEndpoint this[int index]
         {
-            get { return (PanApiEndpoint)this.BaseGet(index); }
+            get
+            {
+                return (PanApiEndpoint)this.BaseGet(index);
+            }
             set
             {
                 if (this.BaseGet(index) != null)
                 {
                     this.BaseRemoveAt(index);
                 }
+
                 this.BaseAdd(index, value);
             }
         }
@@ -91,7 +95,9 @@ namespace Lithnet.Pan.RAProxy
         public void Remove(PanApiEndpoint details)
         {
             if (this.BaseIndexOf(details) >= 0)
+            {
                 this.BaseRemove(details.ApiUri);
+            }
         }
 
         public void RemoveAt(int index)

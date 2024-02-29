@@ -1,20 +1,20 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Lithnet.Pan.RAProxy.RadiusAccounting;
-using System.Threading;
 
 namespace Lithnet.Pan.RAProxy
 {
     internal class AccountingListener
     {
-        private MessageQueue messageQueue;
+        private readonly MessageQueue messageQueue;
 
         public int Port { get; set; }
 

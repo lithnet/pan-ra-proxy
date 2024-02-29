@@ -21,13 +21,9 @@ namespace Lithnet.Pan.RAProxy
         public byte[] ValueAsByteArray { get; set; }
 
         public IPAddress ValueAsIPAddress { get; set; }
-        
-        /// <summary>
-        /// Default constructor
-        /// </summary>
+
         private RadiusAttribute()
         {
-
         }
 
         /// <summary>
@@ -61,7 +57,6 @@ namespace Lithnet.Pan.RAProxy
             {
                 throw new InvalidRadiusAttributeException($"Invalid attribute block content: {e.Message}");
             }
-
         }
 
         public override string ToString()

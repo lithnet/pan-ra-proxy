@@ -1,9 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Diagnostics;
-using System.Net;
+﻿using System.Collections.Generic;
 using System.Configuration;
+using System.Diagnostics;
+using System.Linq;
+using System.Net;
 using System.Text.RegularExpressions;
 
 namespace Lithnet.Pan.RAProxy
@@ -14,9 +13,9 @@ namespace Lithnet.Pan.RAProxy
 
         private static IEnumerator<PanApiEndpoint> activeEndpointEnumerator;
 
-        private static RAProxyConfigurationSection section = ConfigurationManager.GetSection(RAProxyConfigurationSection.SectionName) as RAProxyConfigurationSection;
+        private static readonly RAProxyConfigurationSection section = ConfigurationManager.GetSection(RAProxyConfigurationSection.SectionName) as RAProxyConfigurationSection;
 
-        private static Dictionary<string, string> cachedSecrets = new Dictionary<string, string>();
+        private static readonly Dictionary<string, string> cachedSecrets = new Dictionary<string, string>();
 
         private static Regex usernameRegex;
 

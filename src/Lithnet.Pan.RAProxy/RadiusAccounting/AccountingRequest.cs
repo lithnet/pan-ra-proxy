@@ -1,20 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Net;
 
 namespace Lithnet.Pan.RAProxy.RadiusAccounting
 {
     public class AccountingRequest
     {
-        public IPAddress IPAddress { get; private set; }
+        public IPAddress IPAddress { get;  }
 
-        internal IReadOnlyList<RadiusAttribute> Attributes { get; private set; }
+        internal IReadOnlyList<RadiusAttribute> Attributes { get; }
 
-        internal AccountingRequest(IPAddress ipaddress, IList<RadiusAttribute> attributes)
+        internal AccountingRequest(IPAddress ipAddress, IList<RadiusAttribute> attributes)
         {
-            this.IPAddress = ipaddress;
+            this.IPAddress = ipAddress;
             this.Attributes = new ReadOnlyCollection<RadiusAttribute>(attributes);
         }
 

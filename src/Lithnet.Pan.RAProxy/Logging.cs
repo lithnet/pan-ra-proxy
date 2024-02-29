@@ -2,7 +2,7 @@
 
 namespace Lithnet.Pan.RAProxy
 {
-    internal class Logging
+    internal static class Logging
     {
         // Warnings
         public const int EventIDServerCertificateValidationDisabled = 2001;
@@ -19,16 +19,16 @@ namespace Lithnet.Pan.RAProxy
         public const int EventIDMessageSendException = 3004;
         public const int EventIDApiEndpointExceptionWillFailover = 3005;
         public const int EventIDApiEndpointFailover = 3006;
-        public const int EventIDApiUserIDMappingLoginFailed= 3007;
+        public const int EventIDApiUserIDMappingLoginFailed = 3007;
         public const int EventIDApiUserIDMappingLogoutFailed = 3008;
-        
+
         // Accounting Errors
         public const int EventIDUnknownRadiusHost = 3101;
         public const int EventIDMissingAttribute = 3102;
         public const int EventIDInvalidRadiusPacket = 3202;
 
         // Info
-        public const int EventIDAccountingRequestRecieved = 4001;
+        public const int EventIDAccountingRequestReceived = 4001;
         public const int EventIDUserIDUpdateComplete = 4002;
         public const int EventIDFilteredUsernameDropped = 4003;
 
@@ -41,7 +41,7 @@ namespace Lithnet.Pan.RAProxy
         public static PerformanceCounter CounterReceivedAccountingOtherPerSecond { get; }
 
         public static PerformanceCounter CounterReceivedDiscardedPerSecond { get; }
-        
+
         public static PerformanceCounter CounterSentPerSecond { get; }
 
         public static PerformanceCounter CounterSentLoginsPerSecond { get; }
@@ -49,11 +49,11 @@ namespace Lithnet.Pan.RAProxy
         public static PerformanceCounter CounterSentLogoutsPerSecond { get; }
 
         public static PerformanceCounter CounterIgnoredPerSecond { get; }
-        
+
         public static PerformanceCounter CounterItemsInQueue { get; }
 
         public static PerformanceCounter CounterFailedMappingsPerSecond { get; }
-        
+
         public static void WriteEntry(string message, EventLogEntryType type, int eventID)
         {
             Trace.WriteLine(message);
@@ -69,7 +69,7 @@ namespace Lithnet.Pan.RAProxy
                 EventLog.WriteEntry(Program.EventSourceName, message, type, eventID);
             }
         }
-        
+
         static Logging()
         {
             Logging.CounterReceivedPerSecond = new PerformanceCounter
@@ -87,7 +87,7 @@ namespace Lithnet.Pan.RAProxy
                 MachineName = ".",
                 ReadOnly = false
             };
-            
+
             Logging.CounterReceivedAccountingStartPerSecond = new PerformanceCounter
             {
                 CategoryName = "PANRAProxy",

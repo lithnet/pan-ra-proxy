@@ -1,14 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Lithnet.Pan.RAProxy
 {
-    internal class NativeMethods
+    internal static class NativeMethods
     {
         [DllImport("secur32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         private static extern int TranslateName(string accountName, ExtendedNameFormat nameFormat, ExtendedNameFormat desiredFormat, StringBuilder translatedName, ref int userNameSize);
@@ -22,7 +19,7 @@ namespace Lithnet.Pan.RAProxy
             if (result == 0)
             {
                 result = Marshal.GetLastWin32Error();
-                
+
                 throw new Win32Exception(result);
             }
 
@@ -32,7 +29,7 @@ namespace Lithnet.Pan.RAProxy
             }
 
             StringBuilder builder = new StringBuilder(usernameSize);
-               
+
             result = TranslateName(incomingName, incomingNameFormat, desiredNameFormat, builder, ref usernameSize);
 
             if (result == 0)

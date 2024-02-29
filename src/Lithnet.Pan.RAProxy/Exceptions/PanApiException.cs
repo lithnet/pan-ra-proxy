@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Lithnet.Pan.RAProxy
 {
@@ -10,11 +6,10 @@ namespace Lithnet.Pan.RAProxy
     {
         public string Detail { get; set; }
 
-
         public PanApiException()
             : base()
         {
-            }
+        }
 
         public PanApiException(string message)
             : base(message)
@@ -22,10 +17,13 @@ namespace Lithnet.Pan.RAProxy
         }
 
         public PanApiException(string message, string detail)
-            :
-                this(message)
+            : this(message)
         {
             this.Detail = detail;
+        }
+
+        public PanApiException(string message, Exception innerException) : base(message, innerException)
+        {
         }
     }
 }

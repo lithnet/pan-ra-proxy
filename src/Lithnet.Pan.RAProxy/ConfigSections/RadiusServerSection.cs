@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using System.Configuration;
 using System.Net;
 using System.Net.Sockets;
@@ -41,9 +37,7 @@ namespace Lithnet.Pan.RAProxy
         {
             List<IPAddress> addresses = new List<IPAddress>();
 
-            IPAddress ip;
-
-            if (IPAddress.TryParse(this.Hostname, out ip))
+            if (IPAddress.TryParse(this.Hostname, out IPAddress ip))
             {
                 addresses.Add(ip);
             }

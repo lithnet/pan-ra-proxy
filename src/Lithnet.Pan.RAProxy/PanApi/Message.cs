@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Collections.Specialized;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
-using System.Collections.Specialized;
+using System.Text;
 using System.Web;
-using System.Diagnostics;
 using System.Xml;
 
 namespace Lithnet.Pan.RAProxy
@@ -113,7 +113,6 @@ namespace Lithnet.Pan.RAProxy
                 throw new PanApiException($"An error occurred parsing the API response", response);
             }
         }
-
 
         private static IList<UserMappingException> GetExceptions(XmlNodeList xmlNodeList)
         {
@@ -229,9 +228,9 @@ namespace Lithnet.Pan.RAProxy
             {
                 if (response.StatusCode != HttpStatusCode.OK)
                 {
-                    throw new HttpException((int) response.StatusCode, "The API call failed");
+                    throw new HttpException((int)response.StatusCode, "The API call failed");
                 }
-                
+
                 using (Stream stream = response.GetResponseStream())
                 {
                     StreamReader reader = new StreamReader(stream);
@@ -250,7 +249,6 @@ namespace Lithnet.Pan.RAProxy
 
             request.ContentType = "multipart/form-data; boundary=" + boundary;
             request.Method = "POST";
-
 
             StringBuilder builder = new StringBuilder();
             builder.AppendLine("--" + boundary);

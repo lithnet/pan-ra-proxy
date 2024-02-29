@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Configuration;
-using System.Net;
-using System.Net.Sockets;
 using System.Text.RegularExpressions;
 
 namespace Lithnet.Pan.RAProxy
@@ -60,7 +57,7 @@ namespace Lithnet.Pan.RAProxy
                 {
                     this.match = new Regex(this.Match, RegexOptions.Compiled | RegexOptions.IgnoreCase);
                 }
-                
+
                 return this.match;
             }
         }

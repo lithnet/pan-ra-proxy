@@ -10,7 +10,7 @@ namespace Lithnet.Pan.RAProxy
         {
             get
             {
-                return (Uri) this["url"];
+                return (Uri)this["url"];
             }
 
             set
@@ -24,7 +24,7 @@ namespace Lithnet.Pan.RAProxy
         {
             get
             {
-                return (string) this["api-key"];
+                return (string)this["api-key"];
             }
 
             set

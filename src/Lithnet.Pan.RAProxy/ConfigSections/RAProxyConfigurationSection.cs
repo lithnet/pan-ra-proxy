@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Configuration;
-using System.Text.RegularExpressions;
+﻿using System.Configuration;
 
 namespace Lithnet.Pan.RAProxy
 {
@@ -51,7 +45,6 @@ namespace Lithnet.Pan.RAProxy
                 this["username-rewrites"] = value;
             }
         }
-
 
         [ConfigurationProperty("radius-servers")]
         public RadiusServerCollection RadiusServers

@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Lithnet.Pan.RAProxy
 {
@@ -10,6 +7,30 @@ namespace Lithnet.Pan.RAProxy
     {
         public AggregateUserMappingException(string message, IEnumerable<Exception> exceptions)
             : base(message, exceptions)
+        {
+        }
+
+        public AggregateUserMappingException() : base()
+        {
+        }
+
+        public AggregateUserMappingException(string message) : base(message)
+        {
+        }
+
+        public AggregateUserMappingException(string message, Exception innerException) : base(message, innerException)
+        {
+        }
+
+        public AggregateUserMappingException(IEnumerable<Exception> innerExceptions) : base(innerExceptions)
+        {
+        }
+
+        public AggregateUserMappingException(params Exception[] innerExceptions) : base(innerExceptions)
+        {
+        }
+
+        public AggregateUserMappingException(string message, params Exception[] innerExceptions) : base(message, innerExceptions)
         {
         }
     }

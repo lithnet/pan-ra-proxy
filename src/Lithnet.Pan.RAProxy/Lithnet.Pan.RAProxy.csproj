@@ -1,98 +1,27 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
-  <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{5875B2BD-3621-4E97-9983-AAE6759D70C1}</ProjectGuid>
-    <OutputType>WinExe</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Lithnet.Pan.RAProxy</RootNamespace>
-    <AssemblyName>Lithnet.Pan.RAProxy</AssemblyName>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Configuration" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Web" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.ServiceProcess" />
-    <Reference Include="System.Xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="ConfigSections\PanApiEndpoint.cs" />
-    <Compile Include="ConfigSections\PanApiCollection.cs" />
-    <Compile Include="ConfigSections\UsernameRewriteCollection.cs" />
-    <Compile Include="ConfigSections\RadiusServerCollection.cs" />
-    <Compile Include="ConfigSections\RadiusClientSection.cs" />
-    <Compile Include="ConfigSections\UsernameRewriteSection.cs" />
-    <Compile Include="ConfigSections\RadiusServerSection.cs" />
-    <Compile Include="Exceptions\MissingValueException.cs" />
-    <Compile Include="Exceptions\InvalidRadiusAttributeException.cs" />
-    <Compile Include="Exceptions\UnknownRadiusServerException.cs" />
-    <Compile Include="Exceptions\AggregateUserMappingException.cs" />
-    <Compile Include="Exceptions\UserMappingException.cs" />
-    <Compile Include="Extensions.cs" />
-    <Compile Include="Exceptions\PanApiException.cs" />
-    <Compile Include="Logging.cs" />
-    <Compile Include="MessageQueue.cs" />
-    <Compile Include="RadiusAccounting\AccountingListener.cs" />
-    <Compile Include="PanApi\Entry.cs" />
-    <Compile Include="PanApi\Logout.cs" />
-    <Compile Include="PanApi\Login.cs" />
-    <Compile Include="PanApi\Message.cs" />
-    <Compile Include="PanApi\Payload.cs" />
-    <Compile Include="ConfigSections\RAProxyConfigurationSection.cs" />
-    <Compile Include="RadiusAccounting\AccountingRequest.cs" />
-    <Compile Include="RadiusAccounting\RadiusAttribute.cs" />
-    <Compile Include="RAProxyService.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="RAProxyService.Designer.cs">
-      <DependentUpon>RAProxyService.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Program.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="PanApi\UidMessage.cs" />
-    <Compile Include="ConfigSections\Config.cs" />
-    <Compile Include="WinApi\ExtendedNameFormat.cs" />
-    <Compile Include="WinApi\NativeMethods.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="App.config" />
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net462</TargetFramework>
+		<Company>Lithnet Pty Ltd</Company>
+		<Product>PAN RA Proxy</Product>
+		<Authors>Lithnet Pty LTd</Authors>
+		<Description>Lithnet RADIUS Accounting Proxy for Palo Alto Networks Firewalls</Description>
+		<Copyright>(c) 2024 Lithnet Pty Ltd</Copyright>
+		<Platforms>AnyCPU</Platforms>
+		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
+		<Version>1.0.0.0</Version>
+		<AssemblyName>Lithnet.Pan.RAProxy</AssemblyName>
+		<AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <Reference Include="System.Configuration" />
+	  <Reference Include="System.Runtime.Caching" />
+	  <Reference Include="System.ServiceProcess" />
+	  <Reference Include="System.Web" />
+	</ItemGroup>
+
+	
 </Project>

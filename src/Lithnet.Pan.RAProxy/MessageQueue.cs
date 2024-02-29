@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.Caching;
 using System.Threading;
 using System.Threading.Tasks;
 using Lithnet.Pan.RAProxy.RadiusAccounting;
@@ -19,6 +20,8 @@ namespace Lithnet.Pan.RAProxy
         private Task requestTask;
 
         private readonly ManualResetEvent gate = new ManualResetEvent(true);
+
+        private MemoryCache failedDomainCache = new MemoryCache("failedDomainCache");
 
         public MessageQueue()
         {
@@ -70,7 +73,7 @@ namespace Lithnet.Pan.RAProxy
                             }
                             catch (Exception ex)
                             {
-                                Logging.WriteEntry($"An error occurred while submitting the user-id update\n{ex.Message}\n{ex.StackTrace}", EventLogEntryType.Error, Logging.EventIDMessageSendException);
+                                Logging.WriteEntry($"An error occurred while submitting the user-id update\n\n{ex}", EventLogEntryType.Error, Logging.EventIDMessageSendException);
                             }
                             finally
                             {
@@ -94,7 +97,6 @@ namespace Lithnet.Pan.RAProxy
                 catch (OperationCanceledException)
                 {
                 }
-
             }, this.cancellationToken);
 
             this.requestTask.Start();
@@ -267,17 +269,18 @@ namespace Lithnet.Pan.RAProxy
             }
             catch (PanApiException ex)
             {
-                Logging.WriteEntry($"The UserID API called failed\n{ex.Message}\n{ex.StackTrace}\n{ex.Detail}", EventLogEntryType.Error, Logging.EventIDUnknownApiException);
+                Logging.WriteEntry($"The UserID API called failed\n\n{ex}", EventLogEntryType.Error, Logging.EventIDUnknownApiException);
             }
             catch (Exception ex)
             {
-                Logging.WriteEntry($"An error occurred while submitting the user-id update\n{ex.Message}\n{ex.StackTrace}", EventLogEntryType.Error, Logging.EventIDMessageSendException);
+                Logging.WriteEntry($"An error occurred while submitting the user-id update\n\n{ex}", EventLogEntryType.Error, Logging.EventIDMessageSendException);
             }
         }
 
         private string GetTranslatedUsername(AccountingRequest request)
         {
             string username = Config.MatchReplace(request.Attributes.FirstOrDefault(t => t.Type == RadiusAttribute.RadiusAttributeType.UserName)?.ValueAsString);
+            string domain = null;
 
             try
             {
@@ -286,15 +289,33 @@ namespace Lithnet.Pan.RAProxy
                     case "upn":
                         if (!username.Contains("@"))
                         {
+                            domain = username.Split('\\')?.FirstOrDefault();
+
+                            if (!string.IsNullOrWhiteSpace(domain) && this.failedDomainCache.Contains(domain))
+                            {
+                                Trace.WriteLine($"Ignoring lookup for user {username} as domain is in unknown domain cache");
+                                return username;
+                            }
+
                             return NativeMethods.TranslateName(username, ExtendedNameFormat.NameSamCompatible, ExtendedNameFormat.NameUserPrincipal);
                         }
+
                         break;
 
                     case "nt4":
                         if (!username.Contains("\\"))
                         {
+                            domain = username.Split('@')?.LastOrDefault();
+
+                            if (!string.IsNullOrWhiteSpace(domain) && this.failedDomainCache.Contains(domain))
+                            {
+                                Trace.WriteLine($"Ignoring lookup for user {username} as domain is in unknown domain cache");
+                                return username;
+                            }
+
                             return NativeMethods.TranslateName(username, ExtendedNameFormat.NameUserPrincipal, ExtendedNameFormat.NameSamCompatible);
                         }
+
                         break;
                 }
             }
@@ -305,14 +326,19 @@ namespace Lithnet.Pan.RAProxy
                     // Account does not exist;
                     Logging.WriteEntry($"Could not translate name {username} as it was not found in the directory", EventLogEntryType.Warning, Logging.EventIDCouldNotMapNameNotFound);
                 }
-
-                if (ex.NativeErrorCode == 1355)
+                else if (ex.NativeErrorCode == 1355)
                 {
+                    if (!string.IsNullOrWhiteSpace(domain))
+                    {
+                        this.failedDomainCache.Add(domain, domain, new CacheItemPolicy { AbsoluteExpiration = DateTimeOffset.Now.AddHours(8) });
+                    }
                     // Domain does not exist;
-                    Logging.WriteEntry($"Could not translate name {username} as the domain was unknown", EventLogEntryType.Warning, Logging.EventIDCouldNotMapDomainNotFound);
+                    Logging.WriteEntry($"Could not translate name {username} as the domain was unknown. Future usernames from this domain will not be translated", EventLogEntryType.Warning, Logging.EventIDCouldNotMapDomainNotFound);
                 }
-
-                Logging.WriteEntry($"Could not translate name {username} due to an unknown error\n{ex}", EventLogEntryType.Warning, Logging.EventIDCouldNotMapUnknown);
+                else
+                {
+                    Logging.WriteEntry($"Could not translate name {username} due to an unknown error\n{ex}", EventLogEntryType.Warning, Logging.EventIDCouldNotMapUnknown);
+                }
             }
             catch (Exception ex)
             {

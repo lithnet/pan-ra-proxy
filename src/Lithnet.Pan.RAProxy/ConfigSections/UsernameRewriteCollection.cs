@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Configuration;
+﻿using System.Configuration;
 
 namespace Lithnet.Pan.RAProxy
 {
@@ -23,13 +18,17 @@ namespace Lithnet.Pan.RAProxy
 
         public UsernameRewriteSection this[int index]
         {
-            get { return (UsernameRewriteSection)this.BaseGet(index); }
+            get
+            {
+                return (UsernameRewriteSection)this.BaseGet(index);
+            }
             set
             {
                 if (this.BaseGet(index) != null)
                 {
                     this.BaseRemoveAt(index);
                 }
+
                 this.BaseAdd(index, value);
             }
         }

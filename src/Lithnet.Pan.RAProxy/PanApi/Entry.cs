@@ -1,14 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Lithnet.Pan.RAProxy
 {
     using System.Xml.Serialization;
 
-    public class Entry
+    public class Entry : IEquatable<Entry>
     {
         [XmlAttribute(AttributeName = "name")]
         public string Username { get; set; }
@@ -37,7 +34,7 @@ namespace Lithnet.Pan.RAProxy
             }
 
             return e1.Equals(e2);
-        } 
+        }
 
         public static bool operator !=(Entry e1, Entry e2)
         {
@@ -62,6 +59,22 @@ namespace Lithnet.Pan.RAProxy
 
             return e != null && e.Username == this.Username && e.IpAddress == this.IpAddress;
         }
+
+        public bool Equals(Entry other)
+        {
+            return !(other is null) &&
+                   this.Username == other.Username &&
+                   this.IpAddress == other.IpAddress &&
+                   this.Timeout == other.Timeout;
+        }
+
+        public override int GetHashCode()
+        {
+            int hashCode = -1884528195;
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(this.Username);
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(this.IpAddress);
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(this.Timeout);
+            return hashCode;
+        }
     }
 }
-
