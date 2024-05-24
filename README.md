@@ -6,7 +6,7 @@ The Lithnet PAN RA Proxy is a windows service that receives RADIUS accounting re
 ## System Requirements
 - Windows Server 2008 R2 or later
 - PAN OS 7.0 or later
-- .NET Framework 4.6.2 or later
+- .NET Framework 4.8 or later
 
 ##  Getting started
 Download the installer from the [releases page](https://github.com/lithnet/pan-ra-proxy/releases)
