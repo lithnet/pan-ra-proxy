@@ -13,9 +13,9 @@
     <MajorUpgrade Schedule="afterInstallExecute" AllowSameVersionUpgrades="yes"
                 DowngradeErrorMessage="A later version of [ProductName] is already installed" />
 
-    <PropertyRef Id="WIX_IS_NETFRAMEWORK_462_OR_LATER_INSTALLED"/>
-    <Condition Message="This application requires .NET Framework 4.6.2. Please install the .NET Framework then run this installer again.">
-      <![CDATA[Installed OR WIX_IS_NETFRAMEWORK_462_OR_LATER_INSTALLED]]>
+    <PropertyRef Id="WIX_IS_NETFRAMEWORK_48_OR_LATER_INSTALLED"/>
+    <Condition Message="This application requires .NET Framework 4.8. Please install the .NET Framework then run this installer again.">
+      <![CDATA[Installed OR WIX_IS_NETFRAMEWORK_48_OR_LATER_INSTALLED]]>
     </Condition>
 
     <Property Id="SERVICE_NAME" Secure="yes" Value="panraproxy"/>
